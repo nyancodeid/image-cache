@@ -1,0 +1,28 @@
+{
+  "name": "image-cache",
+  "version": "0.1.0",
+  "description": "Node JS Image Cache with Base64 Encode",
+  "main": "image-cache.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "image cache",
+    "image cache nodejs",
+    "base64 image cache",
+    "nodejs image cache"
+  ],
+  "author": "Ryan Aunur Rassyid <ryandevstudio@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.4.1",
+    "base64-img": "^1.0.3",
+    "md5": "^2.2.1",
+    "pako": "^1.0.5",
+    "zlib": "^1.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyancodeid/image-cache.git"
+  }
+}
