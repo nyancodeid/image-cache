@@ -6,7 +6,7 @@ Powerful image cache for NodeJS
 Asynchronous calls for best Performance.
 
 ## How to install image-cache?
-to install `image-cache` on your project, you can using NPM and Yarn with following command,  
+to install `image-cache` on your project, you can use NPM and Yarn with the following command, 
 
 ### NPM
 ```bash
@@ -33,8 +33,8 @@ create a root folder for the cache file, default root folder is `cache/`, but yo
 ## API
 
 ### Set Options
-is function to replace options from `default options`. this function not returning something.
-for using this function, add this code after define all variable.
+is a function to replace options from `default options`. this function not returning something.
+for using this function, add this code after defining all variable.
 
 ```javascript
 imageCache.setOptions({
@@ -47,11 +47,11 @@ imageCache.setOptions({
 | Key          | Data Type    | Default Value    | Description |
 | :------------- | :----------- | :------------- | :------------- |
 | `dir` | `string` | `path.join(__dirname, 'cache/')` | directory root for cached files |
-| `compressed` | `boolean` | true | compressing cache output with zlib compressing, maybe can make your prosessing cache litle bit longer. for example without compressing is 6-7ms when using compressing is 150-185ms, but your cache file is litle bit smaller than without compressing |
+| `compressed` | `boolean` | true | compressing cache output with zlib compressing maybe can make your processing cache little bit longer. for example without compressing is 6-7ms when using compressing is 150-185ms, but your cache file is a litle bit smaller than without compressing |
 
 
 ### Get Cache
-Get Cache with single line code
+Get Cached Image
 
 #### Example
 ```javascript
@@ -92,7 +92,7 @@ imageCache.setCache(images, function(error) {
 
 
 ### Flush Cache
-Delete all cache files on your directory. this code will be delete all cache on `options.dir` with extension name same as `options.extname`. 
+Delete all cache files on your directory. this code will delete all cache on `options.dir` with extension name same as `options.extname`. 
 
 #### Example
 ```javascript
