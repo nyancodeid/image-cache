@@ -1,6 +1,6 @@
 {
   "name": "image-cache",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
