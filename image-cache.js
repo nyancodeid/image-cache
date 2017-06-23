@@ -10,8 +10,7 @@ var fs = require('fs');
 options = {
 	dir: path.join(__dirname, "cache/"),
 	compressed: true,
-	extname: '.json',
-	autocreatefolder: false
+	extname: '.json'
 }
 
 /**
