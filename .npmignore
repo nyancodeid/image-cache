@@ -2,3 +2,5 @@ yarn-error.log
 yarn.lock
 node_modules
 images
+.idea
+unit-test.js
