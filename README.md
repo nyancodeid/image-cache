@@ -1,4 +1,6 @@
 # image-cache
+[![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Downloads][downloads-image]][npm-url]
+
 Powerful image cache for NodeJS
 
 ## What is image-cache?
