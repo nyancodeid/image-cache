@@ -1,5 +1,5 @@
 # image-cache
-[![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Downloads][downloads-image]][npm-url]
+[![Build Status](https://travis-ci.org/nyancodeid/image-cache.svg?branch=master)](https://travis-ci.org/nyancodeid/image-cache) [![npm version](https://badge.fury.io/js/image-cache.svg)](https://badge.fury.io/js/image-cache)
 
 Powerful image cache for NodeJS
 
@@ -10,7 +10,7 @@ Asynchronous calls for best Performance.
 ## New
 Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching 
 
-## How to install image-cache?
+## Installation
 to install `image-cache` on your project, you can use NPM and Yarn with the following command, 
 
 ### NPM
@@ -23,7 +23,7 @@ npm install --save image-cache
 yarn add image-cache
 ```
 
-## Using image-cache
+## Usage
 Start using `image-cache` 
 
 ```javascript
