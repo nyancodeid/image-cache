@@ -30,7 +30,7 @@ describe('imageCache Test', function() {
 		it('should be return error 301 moved', function(done) {
 			var url = ['https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg'];
 
-			imageCache.setCache(url, function(error) {
+			imageCache.setCache(url, {googleCache: true, resize: false},function(error) {
 				console.log(url);
 				
 				done();
