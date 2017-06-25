@@ -5,6 +5,9 @@ Powerful image cache for NodeJS
 `image-cache` is nodejs module for cache image and serve with base64 format. `image-cache` using 
 Asynchronous calls for best Performance.
 
+## New
+Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching 
+
 ## How to install image-cache?
 to install `image-cache` on your project, you can use NPM and Yarn with the following command, 
 

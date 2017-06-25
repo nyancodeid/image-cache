@@ -6,12 +6,19 @@ var md5 = require("md5");
 var fs = require('fs');
 
 
-
+// Global Options
 options = {
 	dir: path.join(__dirname, "cache/"),
 	compressed: true,
 	extname: '.json'
 }
+// setCache default options
+setCacheOption = {
+	googleCache: false,
+	resize: false,
+	width: 125
+}
+
 
 /**
  * @description
@@ -21,7 +28,7 @@ options = {
  * setOptions({compressed: false});
  */
 exports.setOptions = function(customOptions) {
-	for (let option in customOptions) {
+	for (var option in customOptions) {
 		options[option] = customOptions[option];
 	}
 };
@@ -36,15 +43,15 @@ exports.setOptions = function(customOptions) {
  * @return {boolean}
  */
 exports.isCached = function(image, callback) {
-	let fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
 	
 	fs.exists(options.dir + fileName + options.extname, function(exists) { 
 		callback(exists);
 	});
 };
 exports.isCachedSync = function(image) {
-	let fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-	let whereFile = options.dir + fileName + options.extname;
+	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+	var whereFile = options.dir + fileName + options.extname;
 
 	return fs.existsSync(whereFile);
 }
@@ -60,15 +67,22 @@ exports.isCachedSync = function(image) {
  */
 exports.setCache = function(images, callback) {
 	if (typeof images == "string") {
-		let temp = images;
+		var temp = images;
 		images = [temp];
 	}
 
 	if (!isFolderExist()) {
 		fs.mkdirSync(options.dir);
 	}
+	if (option != undefined && typeof option == "object") {
+		customOptions = option;
 
-	getImage(images, function(error, results) {
+		for (var a in customOptions) {
+			setCacheOption[a] = customOptions[a];
+		}
+	}
+
+	getImage(images, option, function(error, results) {
 		if (error) {
 			callback(error);
 		} else {
@@ -76,8 +90,8 @@ exports.setCache = function(images, callback) {
 				if (!result.error)
 				{
 
-					let fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
-					let data;
+					var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
+					var data;
 					if (result.compressed) {
 	       				data = pako.deflate(JSON.stringify(result), { to: 'string' });
 	       			} else {
@@ -102,10 +116,10 @@ exports.setCache = function(images, callback) {
  * @param {function} [callback]
  * @example
  * getCache('http://foo.bar/foo.png', function(error, results) { });
- * @return {object}
+ * @return undefined
  */
 exports.getCache = function(image, callback) {
-	let fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
 
 	fs.readFile(options.dir + fileName + options.extname, function(err, cachedImage) {
 		if (!err) {
@@ -122,10 +136,10 @@ exports.getCache = function(image, callback) {
 	});
 };
 exports.getCacheSync = function(image) {
-	let fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-	let whereFile = options.dir + fileName + options.extname;
+	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+	var whereFile = options.dir + fileName + options.extname;
 
-	let cachedImage = fs.readFileSync(whereFile);
+	var cachedImage = fs.readFileSync(whereFile);
 
 	cachedImage = backToString(cachedImage);
 	if (options.compressed) {
@@ -136,9 +150,17 @@ exports.getCacheSync = function(image) {
 	return JSON.parse(cachedImage);
 }
 
+/**
+ * @description
+ * flushCache (devare all cache)
+ * @param {function} [callback]
+ * @example
+ * flushCache(function(error) { });
+ * @return undefined
+ */
 exports.flushCache = function(callback) {
 	fs.readdir(options.dir, function(error, files) {
-		let targetFiles = [];
+		var targetFiles = [];
 
 		if (files.length == 0) {
 			callback("this folder is empty");
@@ -155,7 +177,7 @@ exports.flushCache = function(callback) {
 				} else {
 					// callback when no error
 					callback(null, {
-						deleted: targetFiles.length,
+						devared: targetFiles.length,
 						totalFiles: files.length,
 						dir: options.dir
 					});
@@ -164,9 +186,16 @@ exports.flushCache = function(callback) {
 		}
 	});
 };
+/**
+ * @description
+ * flushCacheSync (devare all cache with Synchronous)
+ * @example
+ * flushCache();
+ * @return {object}
+ */
 exports.flushCacheSync = function() {
-	let files = fs.readdirSync(options.dir);
-	let deletedFiles = 0;
+	var files = fs.readdirSync(options.dir);
+	var devaredFiles = 0;
 
 	if (files.length == 0) {
 		return {error: true, message: "this folder is empty"};
@@ -178,26 +207,37 @@ exports.flushCacheSync = function() {
 				} catch (e) {
 					return {error: true, message: e};
 				} finally {
-					deletedFiles++;
+					devaredFiles++;
 				}
 			}
 		});
 
 		return {
 			error: false,
-			deleted: deletedFiles,
+			devared: devaredFiles,
 			totalFiles: files.length,
 			dir: options.dir
 		}
 	}
 }
 
-exports.fetchImage = function(image) {
+/**
+ * @description
+ * fetchImage - store and get cache
+ * @param {string} [required]
+ * @param {object} [options]
+ * @param {function} [callback]
+ * @example
+ * fetchImage('http://foo.bar/foo.png').then(function(result) { ... });
+ * @return undefined
+ */
+exports.fetchImage = function(image, option) {
 	return new Promise((resolve, reject) => {
+		console.time("fetchImage");
 		if (typeof image != "string") {
 			reject("argument 'image' not a string");
 		}
-		let fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+		var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
 
 		fs.exists(options.dir + fileName + options.extname, function(exists) { 
 			if (exists) {
@@ -211,6 +251,7 @@ exports.fetchImage = function(image) {
 						cachedImage.cache = "HIT";
 
 						resolve(cachedImage);
+						console.timeEnd("fetchImage");
 					} else {
 						reject("error while read cache files #" + fileName);
 					}
@@ -219,8 +260,12 @@ exports.fetchImage = function(image) {
 				if (!isFolderExist()) {
 					fs.mkdirSync(options.dir);
 				}
+				if (option == undefined) {
+					option = setCacheOption;
+				}
+				console.log(option);
 
-				getImage([image], function(error, results) {
+				getImage([image], option, function(error, results) {
 					if (error) {
 						resolve(error);
 					} else {
@@ -228,8 +273,8 @@ exports.fetchImage = function(image) {
 							if (!result.error)
 							{
 
-								let fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
-								let data;
+								var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
+								var data;
 								if (result.compressed) {
 				       				data = pako.deflate(JSON.stringify(result), { to: 'string' });
 				       			} else {
@@ -242,6 +287,7 @@ exports.fetchImage = function(image) {
 									} else {
 										result.cache = "MISS";
 										resolve(result);
+										console.timeEnd("fetchImage");
 									}
 								});
 
@@ -257,8 +303,13 @@ exports.fetchImage = function(image) {
 }
 
 
-var getImage = function(images, callback) {
+var getImage = function(images, option, callback) {
 	var fetch = function(url, cb){
+		untouchUrl = url;
+		if (option.googleCache) {
+			url = getGoogleUrl(url, option.width, option.resize);
+		}
+
         base64Img.requestBase64(url, function(error, res, body){
                if (error) {
                     cb(error);
@@ -267,16 +318,16 @@ var getImage = function(images, callback) {
                		{
 	                    cb(null, {
 	                    	error: false,
-	                        url: url,
+	                        url: untouchUrl,
 	                        timestamp: new Date().getTime(),
-	                        hashFile: md5(url),
+	                        hashFile: md5(untouchUrl),
 	                        compressed: options.compressed,
 	                        data: body
 	                    });
                		} else {
                			cb(null, {
                				error: true,
-               				url: url,
+               				url: untouchUrl,
                				statusCode: res.statusCode,
                				statusMessage: res.statusMessage
                			});
@@ -301,8 +352,17 @@ var backToString = function(content) {
 var unlinkCache = function(path, callback) {
 	fs.unlinkSync(path);
 
-	callback("deleted");
+	callback("devared");
 }
 var isFolderExist = function() {
 	return fs.existsSync(options.dir);
+}
+var getGoogleUrl = function(url, width, resize) {
+	var resizeWidth = (resize) ? '&resize_w=' + width : '';
+
+	return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
+	+ '?container=focus'
+	+ resizeWidth
+	+ '&url=' + url
+	;
 }
