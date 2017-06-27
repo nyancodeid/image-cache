@@ -7,16 +7,11 @@ var fs = require('fs');
 
 
 // Global Options
-options = {
+var options = {
 	dir: path.join(__dirname, "cache/"),
 	compressed: true,
-	extname: '.json'
-}
-// setCache default options
-setCacheOption = {
-	googleCache: false,
-	resize: false,
-	width: 125
+	extname: '.json',
+	googleCache: true
 }
 
 
@@ -74,15 +69,8 @@ exports.setCache = function(images, callback) {
 	if (!isFolderExist()) {
 		fs.mkdirSync(options.dir);
 	}
-	if (option != undefined && typeof option == "object") {
-		customOptions = option;
 
-		for (var a in customOptions) {
-			setCacheOption[a] = customOptions[a];
-		}
-	}
-
-	getImage(images, option, function(error, results) {
+	getImage(images, function(error, results) {
 		if (error) {
 			callback(error);
 		} else {
@@ -93,13 +81,14 @@ exports.setCache = function(images, callback) {
 					var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
 					var data;
 					if (result.compressed) {
-	       				data = pako.deflate(JSON.stringify(result), { to: 'string' });
-	       			} else {
-	       				data = JSON.stringify(result);
-	       			}
+						data = pako.deflate(JSON.stringify(result), { to: 'string' });
+					} else {
+						data = JSON.stringify(result);
+					}
 
 					fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
 						if (error) callback(error);
+						else callback(null);
 					});
 				} else {
 					console.log(result);
@@ -231,138 +220,159 @@ exports.flushCacheSync = function() {
  * fetchImage('http://foo.bar/foo.png').then(function(result) { ... });
  * @return undefined
  */
-exports.fetchImage = function(image, option) {
+exports.fetchImage = function(images, option) {
 	return new Promise((resolve, reject) => {
 		console.time("fetchImage");
-		if (typeof image != "string") {
-			reject("argument 'image' not a string");
+
+		if (!Array.isArray(images)) {
+			images = [images];
 		}
-		var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
 
-		fs.exists(options.dir + fileName + options.extname, function(exists) { 
-			if (exists) {
-				fs.readFile(options.dir + fileName + options.extname, function(err, cachedImage) {
-					if (!err) {
-						cachedImage = backToString(cachedImage);
-						if (options.compressed) {
-							cachedImage = pako.inflate(cachedImage, { to: 'string' });
-						}
-						cachedImage = JSON.parse(cachedImage);
-						cachedImage.cache = "HIT";
+		var imagesMore = [];
+		images.forEach(function(image) {
+			var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+			var exists = fs.existsSync(options.dir + fileName + options.extname); 
+			var url = image;
 
-						resolve(cachedImage);
-						console.timeEnd("fetchImage");
-					} else {
-						reject("error while read cache files #" + fileName);
-					}
-				});
+			imagesMore.push({
+				fileName: fileName,
+				exists: exists,
+				url: url
+			});
+		});
+
+		async.map(imagesMore, fetchImageFunc, (error, results) => {
+			if (error) {
+				console.timeEnd('fetchImage');
+				reject(error);
 			} else {
-				if (!isFolderExist()) {
-					fs.mkdirSync(options.dir);
-				}
-				if (option == undefined) {
-					option = setCacheOption;
-				}
-				console.log(option);
-
-				getImage([image], option, function(error, results) {
-					if (error) {
-						resolve(error);
-					} else {
-						results.forEach(function(result) {
-							if (!result.error)
-							{
-
-								var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
-								var data;
-								if (result.compressed) {
-				       				data = pako.deflate(JSON.stringify(result), { to: 'string' });
-				       			} else {
-				       				data = JSON.stringify(result);
-				       			}
-
-								fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
-									if (error) {
-										reject(error);
-									} else {
-										result.cache = "MISS";
-										resolve(result);
-										console.timeEnd("fetchImage");
-									}
-								});
-
-							} else {
-								reject(JSON.parse(result));
-							}
-						});
-					}
-				});
+				console.timeEnd('fetchImage');
+				resolve(results);
 			}
 		});
 	});
 }
 
 
-var getImage = function(images, option, callback) {
+var getImage = function(images, callback) {
 	var fetch = function(url, cb){
 		untouchUrl = url;
-		if (option.googleCache) {
-			url = getGoogleUrl(url, option.width, option.resize);
+		if (options.googleCache) {
+			url = getGoogleUrl(url);
 		}
 
-        base64Img.requestBase64(url, function(error, res, body){
-               if (error) {
-                    cb(error);
-               } else {
-               		if (res.statusCode.toString() == "200")
-               		{
-	                    cb(null, {
-	                    	error: false,
-	                        url: untouchUrl,
-	                        timestamp: new Date().getTime(),
-	                        hashFile: md5(untouchUrl),
-	                        compressed: options.compressed,
-	                        data: body
-	                    });
-               		} else {
-               			cb(null, {
-               				error: true,
-               				url: untouchUrl,
-               				statusCode: res.statusCode,
-               				statusMessage: res.statusMessage
-               			});
-               		}
-               }
-         });
-    }
+		base64Img.requestBase64(url, function(error, res, body){
+			if (error) {
+				cb(error);
+			} else {
+				if (res.statusCode.toString() == "200") {
+					cb(null, {
+						error: false,
+						url: untouchUrl,
+						timestamp: new Date().getTime(),
+						hashFile: md5(untouchUrl),
+						compressed: options.compressed,
+						data: body
+					});
+				} else {
+					cb(null, {
+						error: true,
+						url: untouchUrl,
+						statusCode: res.statusCode,
+						statusMessage: res.statusMessage
+					});
+				}
+			}
+		});
+	}
 	async.map(images, fetch, function(error, results){
-        if (error) {
-        	console.error("[ERROR] " + error.file);
-        } else {
-        	callback(null, results);
-        }
-    });
+		if (error) {
+			console.error("[ERROR] " + error.file);
+		} else {
+			callback(null, results);
+		}
+	});
 }
 var backToString = function(content) {
-  // we do this because JSON.parse would convert it to a utf8 string if encoding wasn't specified
-  if (Buffer.isBuffer(content)) content = content.toString('utf8')
-  content = content.replace(/^\uFEFF/, '')
-  return content
+	if (Buffer.isBuffer(content)) content = content.toString('utf8')
+	content = content.replace(/^\uFEFF/, '')
+	
+	return content;
 }
 var unlinkCache = function(path, callback) {
 	fs.unlinkSync(path);
 
-	callback("devared");
+	callback("deleted");
 }
 var isFolderExist = function() {
+	
 	return fs.existsSync(options.dir);
 }
-var getGoogleUrl = function(url, width, resize) {
-	var resizeWidth = (resize) ? '&resize_w=' + width : '';
-
+var getGoogleUrl = function(url) {
 	return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
 	+ '?container=focus'
-	+ resizeWidth
 	+ '&url=' + url
 	;
+}
+var readFile = function(path, callback) {
+	// path = options.dir + fileName + options.extname
+
+	fs.readFile(path, function(err, cachedImage) {
+		if (!err) {
+			cachedImage = backToString(cachedImage);
+			if (options.compressed) {
+				cachedImage = pako.inflate(cachedImage, { to: 'string' });
+			}
+			cachedImage = JSON.parse(cachedImage);
+			cachedImage.cache = "HIT";
+
+			callback(null, cachedImage);
+		} else {
+			callback("error while read cache files #" + fileName);
+		}
+	});
+};
+var fetchImageFunc = function(image, callback) {
+	if (image.exists) {
+		readFile(options.dir + image.fileName + options.extname, function(error, results) {
+			if (error) {
+				callback(error);
+			} else {
+				callback(null, results);
+			}
+		});
+	} else {
+		if (!isFolderExist()) {
+			fs.mkdirSync(options.dir);
+		}
+
+		getImage([image.url], function(error, results) {
+			if (error) {
+				callback(error);
+			} else {
+				results.forEach(function(result) {
+					if (!result.error) {
+						var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
+						var data;
+						if (result.compressed) {
+							data = pako.deflate(JSON.stringify(result), { to: 'string' });
+						} else {
+							data = JSON.stringify(result);
+						}
+
+						fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
+							if (error) {
+								callback(error);
+							} else {
+								result.cache = "MISS";
+								callback(null, result);
+							}
+						});
+					} else {
+						callback(JSON.stringify(result));
+					}
+				});
+			}
+		});
+	}
 }

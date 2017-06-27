@@ -192,3 +192,46 @@ same like `flushCache()`
 | `results.error` | `boolean` | error statement |
 | `results.message` | `string` | error message |
 
+### fetchImage()
+fetchImage is a function to store cache and get cache data in one time. fetchImage using Async processing to not expect Server Crash because getting image with Sync processing. fetchImage() is check your cache first, if your image is not available in cache folder then this function will get image and return your cache data.
+
+fetchImage() using Promise for another implement about async processing.
+fetchImage callback is return as ##Array##.
+
+#### Example
+
+```javascript
+var url = "http://path.to/image.jpg";
+
+imageCache.fetchImage(url).then((images) => {
+   images.forEach((image) => {
+      console.log(image);
+
+      // { ... }
+   });
+   console.log(images);
+
+   // [ { ... } ]
+});
+```
+
+#### API
+| Key          | Data Type    | Description    |
+| :------------- | :----------- | :------------- | 
+| `images` | `array` | cache data array group |
+| `image` | `object` | cache data object |
+| `image.error`  | `boolean`   | cache data error indicator |
+| `image.url`    | `string`   | image source url before transform to base64 format |
+| `image.hashFile` | `string` | filename cache |
+| `image.timestamp` | `integer` | timestamp when cache created |
+| `image.compressed` | `boolean` | is that cache compressed |
+| `image.data` | `string` | base64 code, ugly text from your beauty images |
+| `image.cache` | `string` | cache status is "MISS" or "HIT" |
+
+## MISS or HIT
+
+### MISS
+when your image is not available in the cache folder, image will be grab from image URL then cached on cache folder.
+
+### HIT
+when your image is available in the cache folder, the image will be grab from directly from cache folder.
