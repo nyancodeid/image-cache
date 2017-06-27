@@ -197,14 +197,14 @@ fetchImage callback is return as Array.
 #### Params
 | Key          | Data Type    | Description    |
 | :------------- | :----------- | :------------- | 
-| `images` | `string` or `array` | image or array of images | 
+| `image` | `string` or `array` | image or array of images | 
 
 #### Example
 
 ```javascript
-var images = "http://path.to/image.jpg";
+var image = "http://path.to/image.jpg";
 
-imageCache.fetchImage(images).then((images) => {
+imageCache.fetchImage(image).then((images) => {
    images.forEach((image) => {
       console.log(image);
 
