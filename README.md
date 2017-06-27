@@ -30,11 +30,6 @@ Start using `image-cache`
 var imageCache = require('image-cache');
 ```
 
-create a root folder for the cache file, default root folder is `cache/`, but you can change it using `setOptions` method.
-```bash
-~# mkdir cache/
-```
-
 ## API
 
 ### setOptions
@@ -54,6 +49,7 @@ imageCache.setOptions({
 | `dir` | `string` | `path.join(__dirname, 'cache/')` | directory root for cached files |
 | `compressed` | `boolean` | true | compressing cache output with zlib compressing maybe can make your processing cache little bit longer. for example without compressing is 6-7ms when using compressing is 150-185ms, but your cache file is a litle bit smaller than without compressing |
 | `extname` | `string` | `.cache` | file extension for your cache files |
+| `googleCache` | `boolean` | `true` | using google cache proxy |
 
 ### isCached()
 Check is your image already cached or not. this function need 2 params.
@@ -193,17 +189,22 @@ same like `flushCache()`
 | `results.message` | `string` | error message |
 
 ### fetchImage()
-fetchImage is a function to store cache and get cache data in one time. fetchImage using Async processing to not expect Server Crash because getting image with Sync processing. fetchImage() is check your cache first, if your image is not available in cache folder then this function will get image and return your cache data.
+fetchImage is a function to store cache and get cache data in one time. fetchImage using Async processing for best performace. fetchImage() check your cache file first, if your image is not available in cache folder then this function will get image and return your cache data.
 
-fetchImage() using Promise for another implement about async processing.
-fetchImage callback is return as ##Array##.
+fetchImage() using Promise.
+fetchImage callback is return as Array.
+
+#### Params
+| Key          | Data Type    | Description    |
+| :------------- | :----------- | :------------- | 
+| `images` | `string` or `array` | image or array of images | 
 
 #### Example
 
 ```javascript
-var url = "http://path.to/image.jpg";
+var images = "http://path.to/image.jpg";
 
-imageCache.fetchImage(url).then((images) => {
+imageCache.fetchImage(images).then((images) => {
    images.forEach((image) => {
       console.log(image);
 

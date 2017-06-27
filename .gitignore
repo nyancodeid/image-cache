@@ -2,7 +2,6 @@
 images/
 cache/
 unit-test.js
-test.js
 
 # Yarn
 yarn-error.log
