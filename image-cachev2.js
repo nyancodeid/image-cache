@@ -69,7 +69,11 @@ imageCache.prototype.setCache = function(images, callback) {
 				if (!result.error) {
 					let output = Core.deflate(result, self.options);
 
-					Core.writeFile(result.fileName, self.options, (error) => {
+					Core.writeFile({
+						fileName: result.fileName,
+						output: output,
+						options: self.options
+					}, (error) => {
 						callback(error);
 					});
 				} else {
@@ -80,12 +84,95 @@ imageCache.prototype.setCache = function(images, callback) {
 	});
 };
 
-imageCache.prototype.fetchImage = function() {
+imageCache.prototype.fetchImage = function(images, callback) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		images = Core.check(images, self.options);
+
+		var imagesMore = [];
+		images.forEach(function(image) {
+			var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+			var exists = fs.existsSync(options.dir + fileName + options.extname); 
+			var url = image;
+
+			imagesMore.push({
+				fileName: fileName,
+				exists: exists,
+				url: url
+			});
+		});
+
+		async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
+			if (error) {
+				console.timeEnd('fetchImage');
+				reject(error);
+			} else {
+				console.timeEnd('fetchImage');
+				resolve(results);
+			}
+		});
+	});
 };
 
 imageCache.prototype.flushCache = function() {
+	self = this;
+
+	fs.readdir(options.dir, (error, files) => {
+		var targetFiles = [];
+
+		if (files.length == 0) {
+			callback("this folder is empty");
+		} else {
+			files.forEach((file) => {
+				if (path.extname(file) == self.options.extname) {
+					targetFiles.push(self.options.dir + "/" + file);
+				}
+			});
+
+			async.map(targetFiles, unlinkCache, function(error, results) {
+				if (error) {
+					callback(error);
+				} else {
+					// callback when no error
+					callback(null, {
+						deleted: targetFiles.length,
+						totalFiles: files.length,
+						dir: options.dir
+					});
+				}
+			});
+		}
+	});
 };
 imageCache.prototype.flushCacheSync = function() {
+	self = this;
+
+	var files = fs.readdirSync(self.options.dir);
+	var deletedFiles = 0;
+
+	if (files.length == 0) {
+		return {error: true, message: "this folder is empty"};
+	} else {
+		files.forEach(function(file) {
+			if (path.extname(file) == self.options.extname) {
+				try	{
+					fs.unlinkSync(path.join(self.options.dir, file));
+				} catch (e) {
+					return {error: true, message: e};
+				} finally {
+					deletedFiles++;
+				}
+			}
+		});
+
+		return {
+			error: false,
+			deleted: deletedFiles,
+			totalFiles: files.length,
+			dir: options.dir
+		}
+	}
 };
 
 var Core = {
@@ -187,13 +274,13 @@ var Core = {
 			}
 		});
 	},
-	writeFileFetch: function() {
-		fs.writeFile(options.dir + fileName + options.extname, data, (error) => {
+	writeFileFetch: function(params, callback) {
+		Core.writeFile(params.source.fileName, params.data, params.options, (error) => {
 			if (error) {
 				callback(error);
 			} else {
-				// this cache will be MISS
-				return result;
+				source.cache = "MISS";
+				callback(source);
 			}
 		});
 	},
@@ -214,7 +301,7 @@ var Core = {
 		return JSON.parse(cachedImage);
 	},
 	readFile: function(image, options, callback) {
-		fs.readFile(Core.getFilePath(image, options), function(error, results) {
+		fs.readFile(Core.getFilePath(image, options), (error, results) => {
 			if (error) {
 				callback(error);
 			} else {
@@ -227,11 +314,24 @@ var Core = {
 	readFileSync: function(image, options) {
 		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
 	},
-	writeFile: function(fileName, options, callback) {
-		fs.writeFile(path.join(options.dir, fileName + options.extname), data, function(error) {
-			if (error) callback(error);
-			else callback(null);
+	writeFile: function(params, callback) {
+		fs.writeFile(path.join(params.options.dir, params.fileName + params.options.extname), params.data, (error) => {
+			callback(error);
 		});
+	},
+	fetchImageFunc: function(image, callback) {
+		if (image.exists) {
+			Core.readFileFetch();
+		} else {
+			getImage([ image.url ], function(error, results) {
+				if (error) {
+					callback(error);
+				} else {
+					results.forEach((result) => {
+					});
+				}
+			});
+		}
 	}
 }
 
