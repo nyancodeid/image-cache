@@ -86,7 +86,7 @@ imageCache.prototype.setCache = function(images, callback) {
 	});
 };
 
-imageCache.prototype.fetchImage = function(images) {
+imageCache.prototype.fetchImages = function(images) {
 	self = this;
 
 	return new Promise((resolve, reject) => {
@@ -120,6 +120,19 @@ imageCache.prototype.fetchImage = function(images) {
 	});
 };
 
+imageCache.prototype.deleteCache = function(images) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		images = Core.check(images, self.options);
+
+		images.forEach((image) => {
+			fs.unlinkSync(Core.getFilePath(image, self.options));
+		});
+
+		resolve(null);
+	});
+};
 imageCache.prototype.flushCache = function() {
 	self = this;
 
@@ -254,7 +267,7 @@ var Core = {
 
 		return fs.existsSync(options.dir);
 	},
-	unlinkCache: function() {
+	unlinkCache: function(callback) {
 		fs.unlinkSync(path);
 
 		callback("deleted");
@@ -279,12 +292,16 @@ var Core = {
 		});
 	},
 	writeFileFetch: function(params, callback) {
-		Core.writeFile(params.source.fileName, params.data, params.options, (error) => {
+		Core.writeFile({
+			options: params.options,
+			data: params.data,
+			fileName: params.source.hashFile
+		}, (error) => {
 			if (error) {
 				callback(error);
 			} else {
-				source.cache = "MISS";
-				callback(null, source);
+				params.source.cache = "MISS";
+				callback(null, params.source);
 			}
 		});
 	},
@@ -340,7 +357,7 @@ var Core = {
 				}
 			});
 		} else {
-			getImage([ image.url ], self.options, function(error, results) {
+			Core.getImages([ image.url ], self.options, function(error, results) {
 				if (error) {
 					callback(error);
 				} else {
