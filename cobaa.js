@@ -5,3 +5,10 @@ imageCache.isCached(image, (exists) => {
 	console.log(exists);
 });
 
+imageCache.getCache(image, (error, results) => {
+	console.log(results.url);
+});
+
+var results = imageCache.getCacheSync(image);
+console.log(results.url);
+

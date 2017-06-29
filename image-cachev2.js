@@ -40,7 +40,7 @@ imageCache.prototype.isCachedSync = function(image) {
 imageCache.prototype.getCache = function(image, callback) {
 	self = this;
 
-	Core.readFile(image, (error, results) => {
+	Core.readFile(image, self.options, (error, results) => {
 		if (!error) {
 			var output = Core.inflate(results, self.options);
 			
@@ -50,10 +50,15 @@ imageCache.prototype.getCache = function(image, callback) {
 		}
 	});
 };
-imageCache.prototype.getCacheSync = function() {
+imageCache.prototype.getCacheSync = function(image) {
+	self = this;
+
+	return JSON.parse(Core.readFileSync(image, self.options));
 };
 
-imageCache.prototype.setCache = function() {
+imageCache.prototype.setCache = function(images, callback) {
+	// Check params images to actualiy be Array data type
+
 };
 
 imageCache.prototype.fetchImage = function() {
@@ -123,7 +128,7 @@ var Core = {
 
 		callback("deleted");
 	},
-	backToString: function() {
+	backToString: function(content) {
 		if (Buffer.isBuffer(content)) content = content.toString('utf8');
 		content = content.replace(/^\uFEFF/, '');
 		
@@ -169,16 +174,21 @@ var Core = {
 			cachedImage = pako.inflate(cachedImage, { to: 'string' });
 		}
 
-		return cachedImage;
+		return JSON.parse(cachedImage);
 	},
-	readFile: function(image, callback) {
-		readFile(Core.getFilePath(image), function(error, results) {
+	readFile: function(image, options, callback) {
+		fs.readFile(Core.getFilePath(image, options), function(error, results) {
 			if (error) {
 				callback(error);
 			} else {
+				results = Core.backToString(results);
+
 				callback(null, results);
 			}
 		});
+	},
+	readFileSync: function(image, options) {
+		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
 	}
 }
 
