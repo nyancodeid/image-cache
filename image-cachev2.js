@@ -5,6 +5,11 @@ var pako = require('pako');
 var md5 = require("md5");
 var fs = require('fs');
 
+/**
+ * @fileoverview Image Cache Async with Base64
+ * @Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
+ */
+
 var imageCache = function() {
 	this.options = {
 		dir: path.join(__dirname, "cache/"),
@@ -154,6 +159,14 @@ imageCache.prototype.fetchImages = function(images) {
 	});
 };
 
+/**
+ * @description
+ * delCache 
+ * @param {string|array} [images url]
+ * @example
+ * .delCache(images).then((error) => {});
+ * @return Promise
+ */
 imageCache.prototype.delCache = function(images) {
 	self = this;
 
@@ -167,11 +180,10 @@ imageCache.prototype.delCache = function(images) {
 		resolve(null);
 	});
 };
-imageCache.prototype.delCacheSync
 
 /**
  * @description
- * flushCache (devare all cache)
+ * flushCache (delete all cache)
  * @param {function} [callback]
  * @example
  * flushCache(function(error) { });
