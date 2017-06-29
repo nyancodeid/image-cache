@@ -103,12 +103,10 @@ imageCache.prototype.fetchImage = function(images, callback) {
 			});
 		});
 
-		async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
+		async.map(imagesMore, Core.fetchImageFunc.bind({options: self.options}), (error, results) => {
 			if (error) {
-				console.timeEnd('fetchImage');
 				reject(error);
 			} else {
-				console.timeEnd('fetchImage');
 				resolve(results);
 			}
 		});
@@ -192,6 +190,7 @@ var Core = {
 		return images;
 	},
 	isDirExists: function(options) {
+
 		return fs.existsSync(options.dir);
 	},
 	getFilePath: function(image, options) {
@@ -245,6 +244,7 @@ var Core = {
 		;
 	},
 	isFolderExists: function() {
+
 		return fs.existsSync(options.dir);
 	},
 	unlinkCache: function() {
@@ -258,19 +258,16 @@ var Core = {
 		
 		return content;
 	},
-	readFileFetch: function() {
-		fs.readFile(path, (err, cachedImage) => {
+	readFileFetch: function(params, callback) {
+		fs.readFile(params.path, (err, cachedImage) => {
 			if (!err) {
-				cachedImage = backToString(cachedImage);
-				if (options.compressed) {
-					cachedImage = pako.inflate(cachedImage, { to: 'string' });
-				}
-				cachedImage = JSON.parse(cachedImage);
-				
-				// this cache will be HIT
-				return cachedImage;
+				cachedImage = Core.inflate(backToString(cachedImage, params.options));
+				cachedImage.cache = "HIT";
+
+				callback(null, cachedImage);
 			} else {
-				return "error while read cache files #" + fileName;
+
+				callback("error while read cache files #" + fileName);
 			}
 		});
 	},
@@ -280,7 +277,7 @@ var Core = {
 				callback(error);
 			} else {
 				source.cache = "MISS";
-				callback(source);
+				callback(null, source);
 			}
 		});
 	},
@@ -312,6 +309,7 @@ var Core = {
 		});
 	},
 	readFileSync: function(image, options) {
+
 		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
 	},
 	writeFile: function(params, callback) {
@@ -320,14 +318,38 @@ var Core = {
 		});
 	},
 	fetchImageFunc: function(image, callback) {
+		self = this;
+
 		if (image.exists) {
-			Core.readFileFetch();
+			Core.readFileFetch({
+				path: Core.getFilePath(image.fileName, self.options),
+				options: self.options
+			}, (error, result) => {
+				if (error) {
+					callback(error);
+				} else {
+					callback(null, result);
+				}
+			});
 		} else {
-			getImage([ image.url ], function(error, results) {
+			getImage([ image.url ], self.options, function(error, results) {
 				if (error) {
 					callback(error);
 				} else {
 					results.forEach((result) => {
+						if (!result.error) {
+							Core.writeFileFetch({
+								source: result,
+								data: Core.deflate(result, self.options),
+								options: self.options
+							}, (error) => {
+								if (error) {
+									callback(error);
+								} else {
+									callback(null, result);
+								}
+							});
+						}
 					});
 				}
 			});
