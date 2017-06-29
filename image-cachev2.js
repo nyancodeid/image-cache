@@ -53,6 +53,15 @@ imageCache.prototype.isCachedSync = function(image) {
 	return fs.existsSync(Core.getFilePath(image, self.options));
 };
 
+/**
+ * @description
+ * getCache
+ * @param {string} [required]
+ * @param {function} [callback]
+ * @example
+ * getCache('http://foo.bar/foo.png', function(error, results) { });
+ * @return undefined
+ */
 imageCache.prototype.getCache = function(image, callback) {
 	self = this;
 
@@ -72,6 +81,15 @@ imageCache.prototype.getCacheSync = function(image) {
 	return JSON.parse(Core.readFileSync(image, self.options));
 };
 
+/**
+ * @description
+ * setCache
+ * @param {array|string} [required]
+ * @param {function} [callback]
+ * @example
+ * setCache(['http://foo.bar/foo.png'], function(error) { });
+ * @return {boolean}
+ */
 imageCache.prototype.setCache = function(images, callback) {
 	self = this;
 	
