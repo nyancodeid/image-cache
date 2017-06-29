@@ -154,7 +154,7 @@ imageCache.prototype.fetchImages = function(images) {
 	});
 };
 
-imageCache.prototype.deleteCache = function(images) {
+imageCache.prototype.delCache = function(images) {
 	self = this;
 
 	return new Promise((resolve, reject) => {
@@ -167,6 +167,16 @@ imageCache.prototype.deleteCache = function(images) {
 		resolve(null);
 	});
 };
+imageCache.prototype.delCacheSync
+
+/**
+ * @description
+ * flushCache (devare all cache)
+ * @param {function} [callback]
+ * @example
+ * flushCache(function(error) { });
+ * @return undefined
+ */
 imageCache.prototype.flushCache = function() {
 	self = this;
 
