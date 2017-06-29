@@ -57,8 +57,27 @@ imageCache.prototype.getCacheSync = function(image) {
 };
 
 imageCache.prototype.setCache = function(images, callback) {
-	// Check params images to actualiy be Array data type
+	self = this;
+	
+	images = Core.check(images, self.options);
 
+	Core.getImages(images, self.options, (error, results) => {
+		if (error) {
+			callback(error);
+		} else {
+			results.forEach((result) => {
+				if (!result.error) {
+					let output = Core.deflate(result, self.options);
+
+					Core.writeFile(result.fileName, self.options, (error) => {
+						callback(error);
+					});
+				} else {
+					console.log(result);
+				}
+			});
+		}
+	});
 };
 
 imageCache.prototype.fetchImage = function() {
@@ -70,16 +89,34 @@ imageCache.prototype.flushCacheSync = function() {
 };
 
 var Core = {
+	check: function(images, options) {
+		/* Check params images to actualiy be Array data type
+		 */
+		if (!Array.isArray(images)) {
+			let temp = images;
+			images = [temp];
+		}
+		/* Check is cache directory available
+		 */
+		if (!Core.isDirExists(options)) {
+			fs.mkdirSync(options.dir);
+		}
+
+		return images;
+	},
+	isDirExists: function(options) {
+		return fs.existsSync(options.dir);
+	},
 	getFilePath: function(image, options) {
 		var fileName = (options.compressed) ? md5(image) + "_min" : md5(image);
 
 		return options.dir + fileName + options.extname;
 	},
-	getImages: function() {
+	getImages: function(images, options, callback) {
 		var fetch = function(url, cb) {
 			var untouchUrl = url;
 			if (options.googleCache) {
-				url = getGoogleUrl(url);
+				url = Core.getGoogleUrl(url);
 			}
 
 			base64Img.requestBase64(url, function(error, res, body){
@@ -108,13 +145,13 @@ var Core = {
 		}
 		async.map(images, fetch, function(error, results){
 			if (error) {
-				console.error("[ERROR] " + error.file);
+				console.error(error);
 			} else {
 				callback(null, results);
 			}
 		});
 	},
-	getGoogleUrl: function() {
+	getGoogleUrl: function(url) {
 		return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
 		+ '?container=focus'
 		+ '&url=' + url
@@ -135,7 +172,7 @@ var Core = {
 		return content;
 	},
 	readFileFetch: function() {
-		fs.readFile(path, function(err, cachedImage) {
+		fs.readFile(path, (err, cachedImage) => {
 			if (!err) {
 				cachedImage = backToString(cachedImage);
 				if (options.compressed) {
@@ -151,7 +188,7 @@ var Core = {
 		});
 	},
 	writeFileFetch: function() {
-		fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
+		fs.writeFile(options.dir + fileName + options.extname, data, (error) => {
 			if (error) {
 				callback(error);
 			} else {
@@ -189,6 +226,12 @@ var Core = {
 	},
 	readFileSync: function(image, options) {
 		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
+	},
+	writeFile: function(fileName, options, callback) {
+		fs.writeFile(path.join(options.dir, fileName + options.extname), data, function(error) {
+			if (error) callback(error);
+			else callback(null);
+		});
 	}
 }
 
