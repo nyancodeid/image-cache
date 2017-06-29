@@ -61,6 +61,8 @@ imageCache.prototype.setCache = function(images, callback) {
 	
 	images = Core.check(images, self.options);
 
+	console.log(images);
+
 	Core.getImages(images, self.options, (error, results) => {
 		if (error) {
 			callback(error);
@@ -70,8 +72,8 @@ imageCache.prototype.setCache = function(images, callback) {
 					let output = Core.deflate(result, self.options);
 
 					Core.writeFile({
-						fileName: result.fileName,
-						output: output,
+						fileName: result.hashFile,
+						data: output,
 						options: self.options
 					}, (error) => {
 						callback(error);
@@ -84,7 +86,7 @@ imageCache.prototype.setCache = function(images, callback) {
 	});
 };
 
-imageCache.prototype.fetchImage = function(images, callback) {
+imageCache.prototype.fetchImage = function(images) {
 	self = this;
 
 	return new Promise((resolve, reject) => {
@@ -92,21 +94,26 @@ imageCache.prototype.fetchImage = function(images, callback) {
 
 		var imagesMore = [];
 		images.forEach(function(image) {
-			var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-			var exists = fs.existsSync(options.dir + fileName + options.extname); 
+			var fileName = (self.options.compressed) ? md5(image) + "_min" : md5(image); 
+			var exists = fs.existsSync(self.options.dir + fileName + self.options.extname); 
 			var url = image;
 
 			imagesMore.push({
-				fileName: fileName,
+				fileName: image,
 				exists: exists,
-				url: url
+				url: url,
+				options: self.options
 			});
 		});
 
-		async.map(imagesMore, Core.fetchImageFunc.bind({options: self.options}), (error, results) => {
+		async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
 			if (error) {
 				reject(error);
 			} else {
+				if (results.length == 1 && Array.isArray(results)) {
+					results = results[0];
+				}
+
 				resolve(results);
 			}
 		});
@@ -261,13 +268,13 @@ var Core = {
 	readFileFetch: function(params, callback) {
 		fs.readFile(params.path, (err, cachedImage) => {
 			if (!err) {
-				cachedImage = Core.inflate(backToString(cachedImage, params.options));
+				cachedImage = Core.inflate(Core.backToString(cachedImage, params.options), params.options);
 				cachedImage.cache = "HIT";
 
 				callback(null, cachedImage);
 			} else {
 
-				callback("error while read cache files #" + fileName);
+				callback(err);
 			}
 		});
 	},
@@ -319,6 +326,7 @@ var Core = {
 	},
 	fetchImageFunc: function(image, callback) {
 		self = this;
+		self.options = image.options;
 
 		if (image.exists) {
 			Core.readFileFetch({

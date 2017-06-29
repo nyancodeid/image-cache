@@ -12,7 +12,11 @@ imageCache.isCached(image, (exists) => {
 // var results = imageCache.getCacheSync(image);
 // console.log(results.url);
 
-imageCache.setCache(image, (error, results) => {
-	console.log(error);
+// imageCache.setCache(image, (error, results) => {
+// 	console.log(results);
+// });
+
+imageCache.fetchImage(image).then((results) => {
+	
 });
 
