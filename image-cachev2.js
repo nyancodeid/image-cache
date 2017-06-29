@@ -300,6 +300,7 @@ var Core = {
 			if (error) {
 				callback(error);
 			} else {
+				// miss cache
 				params.source.cache = "MISS";
 				callback(null, params.source);
 			}
