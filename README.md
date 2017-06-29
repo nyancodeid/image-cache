@@ -8,7 +8,7 @@ Powerful image cache for NodeJS
 Asynchronous calls for best Performance.
 
 ## New
-Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching 
+Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching.
 
 ## Installation
 to install `image-cache` on your project, you can use NPM and Yarn with the following command, 
@@ -235,4 +235,4 @@ imageCache.fetchImage(image).then((images) => {
 when your image is not available in the cache folder, image will be grab from image URL then cached on cache folder.
 
 ### HIT
-when your image is available in the cache folder, the image will be grab from directly from cache folder.
+when your image is available in the cache folder, the image will be grab directly from cache folder.

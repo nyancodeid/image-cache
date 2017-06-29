@@ -3,4 +3,5 @@ yarn.lock
 node_modules
 images
 .idea
+coba.js
 unit-test.js
