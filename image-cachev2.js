@@ -282,6 +282,7 @@ var Core = {
 		fs.readFile(params.path, (err, cachedImage) => {
 			if (!err) {
 				cachedImage = Core.inflate(Core.backToString(cachedImage, params.options), params.options);
+				// Hit Cache
 				cachedImage.cache = "HIT";
 
 				callback(null, cachedImage);
