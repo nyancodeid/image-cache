@@ -1,8 +1,6 @@
 # image-cache
 [![Build Status](https://travis-ci.org/nyancodeid/image-cache.svg?branch=master)](https://travis-ci.org/nyancodeid/image-cache) [![npm version](https://badge.fury.io/js/image-cache.svg)](https://badge.fury.io/js/image-cache)  
 
-[![NPM Status](https://nodei.co/npm/image-cache.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/image-cache.png?downloads=true&downloadRank=true&stars=true)
-
 Powerful image cache for NodeJS
 
 ## What is image-cache?
