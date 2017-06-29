@@ -1,6 +1,6 @@
 {
   "name": "image-cache",
-  "version": "0.2.5",
+  "version": "0.3.1",
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "image cache",
     "image cache nodejs",
     "base64 image cache",
-    "nodejs image cache"
+    "nodejs image cache",
+    "node js image cache"
   ],
   "author": "Ryan Aunur Rassyid <ryandevstudio@gmail.com>",
   "license": "MIT",
