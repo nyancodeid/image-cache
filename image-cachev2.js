@@ -14,6 +14,13 @@ var imageCache = function() {
 	};
 };
 
+/**
+ * @description
+ * setOptions
+ * @param {object} [required]
+ * @example
+ * setOptions({compressed: false});
+ */
 imageCache.prototype.setOptions = function(options) {
 	self = this;
 
@@ -24,6 +31,15 @@ imageCache.prototype.setOptions = function(options) {
 	}
 };
 
+/**
+ * @description
+ * isCached
+ * @param {string} [required]
+ * @param {function} [callback]
+ * @example
+ * isCached('http://foo.bar/foo.png', function(exist) { });
+ * @return {boolean}
+ */
 imageCache.prototype.isCached = function(image, callback) {
 	self = this;
 
