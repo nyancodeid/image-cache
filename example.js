@@ -1,6 +1,5 @@
 var imageCache = require('./image-cache');
 var path = require('path');
-var fs = require("fs");
 
 imageCache.setOptions({
 	dir: path.join(__dirname, 'cache/'),

@@ -4,7 +4,7 @@
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
-    "test": "node node_modules/.bin/mocha test/test.js"
+    "test": "mocha test/test.js"
   },
   "keywords": [
     "image cache",
@@ -26,7 +26,5 @@
     "type": "git",
     "url": "https://github.com/nyancodeid/image-cache.git"
   },
-  "devDependencies": {
-    "mocha": "^3.4.2"
-  }
+  "devDependencies": {}
 }

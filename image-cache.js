@@ -5,15 +5,19 @@ var pako = require('pako');
 var md5 = require("md5");
 var fs = require('fs');
 
+/**
+ * @fileoverview Image Cache Async with Base64
+ * @Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
+ */
 
-// Global Options
-var options = {
-	dir: path.join(__dirname, "cache/"),
-	compressed: true,
-	extname: '.json',
-	googleCache: true
-}
-
+var imageCache = function() {
+	this.options = {
+		dir: path.join(__dirname, "cache/"),
+		compressed: false,
+		extname: '.cache',
+		googleCache: true
+	};
+};
 
 /**
  * @description
@@ -22,9 +26,13 @@ var options = {
  * @example
  * setOptions({compressed: false});
  */
-exports.setOptions = function(customOptions) {
-	for (var option in customOptions) {
-		options[option] = customOptions[option];
+imageCache.prototype.setOptions = function(options) {
+	self = this;
+
+	for (var option in options) {
+		if (typeof self.options[option] == "undefined") throw Error("option \'" + option + "\' is not available");
+
+		self.options[option] = options[option];
 	}
 };
 
@@ -37,65 +45,17 @@ exports.setOptions = function(customOptions) {
  * isCached('http://foo.bar/foo.png', function(exist) { });
  * @return {boolean}
  */
-exports.isCached = function(image, callback) {
-	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-	
-	fs.exists(options.dir + fileName + options.extname, function(exists) { 
+imageCache.prototype.isCached = function(image, callback) {
+	self = this;
+
+	fs.exists(Core.getFilePath(image, self.options), function(exists) { 
 		callback(exists);
 	});
 };
-exports.isCachedSync = function(image) {
-	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-	var whereFile = options.dir + fileName + options.extname;
+imageCache.prototype.isCachedSync = function(image) {
+	self = this;
 
-	return fs.existsSync(whereFile);
-}
-
-/**
- * @description
- * setCache
- * @param {array|string} [required]
- * @param {function} [callback]
- * @example
- * setCache(['http://foo.bar/foo.png'], function(error) { });
- * @return {boolean}
- */
-exports.setCache = function(images, callback) {
-	if (typeof images == "string") {
-		var temp = images;
-		images = [temp];
-	}
-
-	if (!isFolderExist()) {
-		fs.mkdirSync(options.dir);
-	}
-
-	getImage(images, function(error, results) {
-		if (error) {
-			callback(error);
-		} else {
-			results.forEach(function(result) {
-				if (!result.error)
-				{
-
-					var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
-					var data;
-					if (result.compressed) {
-						data = pako.deflate(JSON.stringify(result), { to: 'string' });
-					} else {
-						data = JSON.stringify(result);
-					}
-
-					fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
-						if (error) callback(error);
-						else callback(null);
-					});
-				} else {
-					console.log(result);
-				}
-			});
-		}
-	});
+	return fs.existsSync(Core.getFilePath(image, self.options));
 };
 
 /**
@@ -107,56 +67,140 @@ exports.setCache = function(images, callback) {
  * getCache('http://foo.bar/foo.png', function(error, results) { });
  * @return undefined
  */
-exports.getCache = function(image, callback) {
-	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
+imageCache.prototype.getCache = function(image, callback) {
+	self = this;
 
-	fs.readFile(options.dir + fileName + options.extname, function(err, cachedImage) {
-		if (!err) {
-			cachedImage = backToString(cachedImage);
-			if (options.compressed) {
-				// Inflate, decompressing string
-				cachedImage = pako.inflate(cachedImage, { to: 'string' });
-				
-			}
-			callback(null, JSON.parse(cachedImage));
+	Core.readFile(image, self.options, (error, results) => {
+		if (!error) {
+			var output = Core.inflate(results, self.options);
+			
+			callback(null, output);
 		} else {
-			callback(err);
+			callback(error);
 		}
 	});
 };
-exports.getCacheSync = function(image) {
-	var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-	var whereFile = options.dir + fileName + options.extname;
+imageCache.prototype.getCacheSync = function(image) {
+	self = this;
 
-	var cachedImage = fs.readFileSync(whereFile);
-
-	cachedImage = backToString(cachedImage);
-	if (options.compressed) {
-		// Inflate, decompressing string
-		cachedImage = pako.inflate(cachedImage, { to: 'string' });
-	}
-
-	return JSON.parse(cachedImage);
-}
+	return JSON.parse(Core.readFileSync(image, self.options));
+};
 
 /**
  * @description
- * flushCache (devare all cache)
+ * setCache
+ * @param {array|string} [required]
+ * @param {function} [callback]
+ * @example
+ * setCache(['http://foo.bar/foo.png'], function(error) { });
+ * @return {boolean}
+ */
+imageCache.prototype.setCache = function(images, callback) {
+	self = this;
+	
+	images = Core.check(images, self.options);
+
+	console.log(images);
+
+	Core.getImages(images, self.options, (error, results) => {
+		if (error) {
+			callback(error);
+		} else {
+			results.forEach((result) => {
+				if (!result.error) {
+					let output = Core.deflate(result, self.options);
+
+					Core.writeFile({
+						fileName: result.hashFile,
+						data: output,
+						options: self.options
+					}, (error) => {
+						callback(error);
+					});
+				} else {
+					console.log(result);
+				}
+			});
+		}
+	});
+};
+
+imageCache.prototype.fetchImages = function(images) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		images = Core.check(images, self.options);
+
+		var imagesMore = [];
+		images.forEach(function(image) {
+			var fileName = (self.options.compressed) ? md5(image) + "_min" : md5(image); 
+			var exists = fs.existsSync(self.options.dir + fileName + self.options.extname); 
+			var url = image;
+
+			imagesMore.push({
+				fileName: image,
+				exists: exists,
+				url: url,
+				options: self.options
+			});
+		});
+
+		async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
+			if (error) {
+				reject(error);
+			} else {
+				if (results.length == 1 && Array.isArray(results)) {
+					results = results[0];
+				}
+
+				resolve(results);
+			}
+		});
+	});
+};
+
+/**
+ * @description
+ * delCache 
+ * @param {string|array} [images url]
+ * @example
+ * .delCache(images).then((error) => {});
+ * @return Promise
+ */
+imageCache.prototype.delCache = function(images) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		images = Core.check(images, self.options);
+
+		images.forEach((image) => {
+			fs.unlinkSync(Core.getFilePath(image, self.options));
+		});
+
+		resolve(null);
+	});
+};
+
+/**
+ * @description
+ * flushCache (delete all cache)
  * @param {function} [callback]
  * @example
  * flushCache(function(error) { });
  * @return undefined
  */
-exports.flushCache = function(callback) {
-	fs.readdir(options.dir, function(error, files) {
+imageCache.prototype.flushCache = function() {
+	self = this;
+
+	fs.readdir(options.dir, (error, files) => {
 		var targetFiles = [];
 
 		if (files.length == 0) {
 			callback("this folder is empty");
 		} else {
-			files.forEach(function(file) {
-				if (path.extname(file) == options.extname) {
-					targetFiles.push(options.dir + "/" + file);
+			files.forEach((file) => {
+				if (path.extname(file) == self.options.extname) {
+					targetFiles.push(self.options.dir + "/" + file);
 				}
 			});
 
@@ -166,7 +210,7 @@ exports.flushCache = function(callback) {
 				} else {
 					// callback when no error
 					callback(null, {
-						devared: targetFiles.length,
+						deleted: targetFiles.length,
 						totalFiles: files.length,
 						dir: options.dir
 					});
@@ -175,204 +219,225 @@ exports.flushCache = function(callback) {
 		}
 	});
 };
-/**
- * @description
- * flushCacheSync (devare all cache with Synchronous)
- * @example
- * flushCache();
- * @return {object}
- */
-exports.flushCacheSync = function() {
-	var files = fs.readdirSync(options.dir);
-	var devaredFiles = 0;
+imageCache.prototype.flushCacheSync = function() {
+	self = this;
+
+	var files = fs.readdirSync(self.options.dir);
+	var deletedFiles = 0;
 
 	if (files.length == 0) {
 		return {error: true, message: "this folder is empty"};
 	} else {
 		files.forEach(function(file) {
-			if (path.extname(file) == options.extname) {
+			if (path.extname(file) == self.options.extname) {
 				try	{
-					fs.unlinkSync(path.join(options.dir, file));
+					fs.unlinkSync(path.join(self.options.dir, file));
 				} catch (e) {
 					return {error: true, message: e};
 				} finally {
-					devaredFiles++;
+					deletedFiles++;
 				}
 			}
 		});
 
 		return {
 			error: false,
-			devared: devaredFiles,
+			deleted: deletedFiles,
 			totalFiles: files.length,
 			dir: options.dir
 		}
 	}
-}
-
-/**
- * @description
- * fetchImage - store and get cache
- * @param {string} [required]
- * @param {object} [options]
- * @param {function} [callback]
- * @example
- * fetchImage('http://foo.bar/foo.png').then(function(result) { ... });
- * @return undefined
- */
-exports.fetchImage = function(images, option) {
-	return new Promise((resolve, reject) => {
-		console.time("fetchImage");
-
-		if (!Array.isArray(images)) {
-			images = [images];
-		}
-
-		var imagesMore = [];
-		images.forEach(function(image) {
-			var fileName = (options.compressed) ? md5(image) + "_min" : md5(image); 
-			var exists = fs.existsSync(options.dir + fileName + options.extname); 
-			var url = image;
-
-			imagesMore.push({
-				fileName: fileName,
-				exists: exists,
-				url: url
-			});
-		});
-
-		async.map(imagesMore, fetchImageFunc, (error, results) => {
-			if (error) {
-				console.timeEnd('fetchImage');
-				reject(error);
-			} else {
-				console.timeEnd('fetchImage');
-				resolve(results);
-			}
-		});
-	});
-}
-
-
-var getImage = function(images, callback) {
-	var fetch = function(url, cb){
-		untouchUrl = url;
-		if (options.googleCache) {
-			url = getGoogleUrl(url);
-		}
-
-		base64Img.requestBase64(url, function(error, res, body){
-			if (error) {
-				cb(error);
-			} else {
-				if (res.statusCode.toString() == "200") {
-					cb(null, {
-						error: false,
-						url: untouchUrl,
-						timestamp: new Date().getTime(),
-						hashFile: md5(untouchUrl),
-						compressed: options.compressed,
-						data: body
-					});
-				} else {
-					cb(null, {
-						error: true,
-						url: untouchUrl,
-						statusCode: res.statusCode,
-						statusMessage: res.statusMessage
-					});
-				}
-			}
-		});
-	}
-	async.map(images, fetch, function(error, results){
-		if (error) {
-			console.error("[ERROR] " + error.file);
-		} else {
-			callback(null, results);
-		}
-	});
-}
-var backToString = function(content) {
-	if (Buffer.isBuffer(content)) content = content.toString('utf8')
-	content = content.replace(/^\uFEFF/, '')
-	
-	return content;
-}
-var unlinkCache = function(path, callback) {
-	fs.unlinkSync(path);
-
-	callback("deleted");
-}
-var isFolderExist = function() {
-	
-	return fs.existsSync(options.dir);
-}
-var getGoogleUrl = function(url) {
-	return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
-	+ '?container=focus'
-	+ '&url=' + url
-	;
-}
-var readFile = function(path, callback) {
-	// path = options.dir + fileName + options.extname
-
-	fs.readFile(path, function(err, cachedImage) {
-		if (!err) {
-			cachedImage = backToString(cachedImage);
-			if (options.compressed) {
-				cachedImage = pako.inflate(cachedImage, { to: 'string' });
-			}
-			cachedImage = JSON.parse(cachedImage);
-			cachedImage.cache = "HIT";
-
-			callback(null, cachedImage);
-		} else {
-			callback("error while read cache files #" + fileName);
-		}
-	});
 };
-var fetchImageFunc = function(image, callback) {
-	if (image.exists) {
-		readFile(options.dir + image.fileName + options.extname, function(error, results) {
+
+var Core = {
+	check: function(images, options) {
+		/* Check params images to actualiy be Array data type
+		 */
+		if (!Array.isArray(images)) {
+			let temp = images;
+			images = [temp];
+		}
+		/* Check is cache directory available
+		 */
+		if (!Core.isDirExists(options)) {
+			fs.mkdirSync(options.dir);
+		}
+
+		return images;
+	},
+	isDirExists: function(options) {
+
+		return fs.existsSync(options.dir);
+	},
+	getFilePath: function(image, options) {
+		var fileName = (options.compressed) ? md5(image) + "_min" : md5(image);
+
+		return options.dir + fileName + options.extname;
+	},
+	getImages: function(images, options, callback) {
+		var fetch = function(url, cb) {
+			var untouchUrl = url;
+			if (options.googleCache) {
+				url = Core.getGoogleUrl(url);
+			}
+
+			base64Img.requestBase64(url, function(error, res, body){
+				if (error) {
+					cb(error);
+				} else {
+					if (res.statusCode.toString() == "200") {
+						cb(null, {
+							error: false,
+							url: untouchUrl,
+							timestamp: new Date().getTime(),
+							hashFile: md5(untouchUrl),
+							compressed: options.compressed,
+							data: body
+						});
+					} else {
+						cb(null, {
+							error: true,
+							url: untouchUrl,
+							statusCode: res.statusCode,
+							statusMessage: res.statusMessage
+						});
+					}
+				}
+			});
+		}
+		async.map(images, fetch, function(error, results){
 			if (error) {
-				callback(error);
+				console.error(error);
 			} else {
 				callback(null, results);
 			}
 		});
-	} else {
-		if (!isFolderExist()) {
-			fs.mkdirSync(options.dir);
-		}
+	},
+	getGoogleUrl: function(url) {
+		return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
+		+ '?container=focus'
+		+ '&url=' + url
+		;
+	},
+	isFolderExists: function() {
 
-		getImage([image.url], function(error, results) {
+		return fs.existsSync(options.dir);
+	},
+	unlinkCache: function(callback) {
+		fs.unlinkSync(path);
+
+		callback("deleted");
+	},
+	backToString: function(content) {
+		if (Buffer.isBuffer(content)) content = content.toString('utf8');
+		content = content.replace(/^\uFEFF/, '');
+		
+		return content;
+	},
+	readFileFetch: function(params, callback) {
+		fs.readFile(params.path, (err, cachedImage) => {
+			if (!err) {
+				cachedImage = Core.inflate(Core.backToString(cachedImage, params.options), params.options);
+				// Hit Cache
+				cachedImage.cache = "HIT";
+
+				callback(null, cachedImage);
+			} else {
+
+				callback(err);
+			}
+		});
+	},
+	writeFileFetch: function(params, callback) {
+		Core.writeFile({
+			options: params.options,
+			data: params.data,
+			fileName: params.source.hashFile
+		}, (error) => {
 			if (error) {
 				callback(error);
 			} else {
-				results.forEach(function(result) {
-					if (!result.error) {
-						var fileName = (result.compressed) ? result.hashFile + "_min" : result.hashFile;
-						var data;
-						if (result.compressed) {
-							data = pako.deflate(JSON.stringify(result), { to: 'string' });
-						} else {
-							data = JSON.stringify(result);
-						}
-
-						fs.writeFile(options.dir + fileName + options.extname, data, function(error) {
-							if (error) {
-								callback(error);
-							} else {
-								result.cache = "MISS";
-								callback(null, result);
-							}
-						});
-					} else {
-						callback(JSON.stringify(result));
-					}
-				});
+				// miss cache
+				params.source.cache = "MISS";
+				callback(null, params.source);
 			}
 		});
+	},
+	deflate: function(data, options) {
+		if (options.compressed) {
+			result = pako.deflate(JSON.stringify(data), { to: 'string' });
+		} else {
+			result = JSON.stringify(data);
+		}
+
+		return result;
+	},
+	inflate: function(cachedImage, options) {
+		if (options.compressed) {
+			cachedImage = pako.inflate(cachedImage, { to: 'string' });
+		}
+
+		return JSON.parse(cachedImage);
+	},
+	readFile: function(image, options, callback) {
+		fs.readFile(Core.getFilePath(image, options), (error, results) => {
+			if (error) {
+				callback(error);
+			} else {
+				results = Core.backToString(results);
+
+				callback(null, results);
+			}
+		});
+	},
+	readFileSync: function(image, options) {
+
+		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
+	},
+	writeFile: function(params, callback) {
+		fs.writeFile(path.join(params.options.dir, params.fileName + params.options.extname), params.data, (error) => {
+			callback(error);
+		});
+	},
+	fetchImageFunc: function(image, callback) {
+		self = this;
+		self.options = image.options;
+
+		if (image.exists) {
+			Core.readFileFetch({
+				path: Core.getFilePath(image.fileName, self.options),
+				options: self.options
+			}, (error, result) => {
+				if (error) {
+					callback(error);
+				} else {
+					callback(null, result);
+				}
+			});
+		} else {
+			Core.getImages([ image.url ], self.options, function(error, results) {
+				if (error) {
+					callback(error);
+				} else {
+					results.forEach((result) => {
+						if (!result.error) {
+							Core.writeFileFetch({
+								source: result,
+								data: Core.deflate(result, self.options),
+								options: self.options
+							}, (error) => {
+								if (error) {
+									callback(error);
+								} else {
+									callback(null, result);
+								}
+							});
+						}
+					});
+				}
+			});
+		}
 	}
 }
+
+module.exports = new imageCache();
