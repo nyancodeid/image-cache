@@ -6,8 +6,8 @@ var md5 = require("md5");
 var fs = require('fs');
 
 /**
- * @fileoverview Image Cache Async with Base64
- * @Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
+ * image-cache - Image Cache Async with Base64
+ * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
  */
 
 var imageCache = function() {
