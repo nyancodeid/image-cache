@@ -156,7 +156,9 @@ imageCache.prototype.Set = function(images) {
 							data: output,
 							options: self.options
 						}, (error) => {
-							reject("Error while write files " + result.hashFile);
+							if (error) {
+								reject("Error while write files " + result.hashFile);
+							}
 						});
 					} else {
 						console.log(result);
