@@ -80,6 +80,21 @@ imageCache.prototype.getCache = function(image, callback) {
 		}
 	});
 };
+imageCache.prototype.Get = function(image) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		Core.readFile(image, self.options, (error, results) => {
+			if (!error) {
+				var output = Core.inflate(results, self.options);
+
+				resolve(output);
+			} else {
+				reject(error);
+			}
+		});
+	});
+};
 imageCache.prototype.getCacheSync = function(image) {
 	self = this;
 
@@ -99,8 +114,6 @@ imageCache.prototype.setCache = function(images, callback) {
 	self = this;
 	
 	images = Core.check(images, self.options);
-
-	console.log(images);
 
 	Core.getImages(images, self.options, (error, results) => {
 		if (error) {
@@ -124,6 +137,35 @@ imageCache.prototype.setCache = function(images, callback) {
 		}
 	});
 };
+imageCache.prototype.Set = function(images) {
+	self = this;
+
+	return new Promise((resolve, reject) => {
+		images = Core.check(images, self.options);
+
+		Core.getImages(images, self.options, (error, results) => {
+			if (error) {
+				reject(error.message);
+			} else {
+				results.forEach((result) => {
+					if (!result.error) {
+						let output = Core.deflate(result, self.options);
+
+						Core.writeFile({
+							fileName: result.hashFile,
+							data: output,
+							options: self.options
+						}, (error) => {
+							reject("Error while write files " + result.hashFile);
+						});
+					} else {
+						console.log(result);
+					}
+				});
+			}
+		});
+	});
+}
 
 imageCache.prototype.fetchImages = function(images) {
 	self = this;
@@ -334,6 +376,26 @@ var Core = {
 		
 		return content;
 	},
+	setSize: function(path, image) {
+		var type = typeof image;
+		return new Promise((resolve, reject) => {
+			fs.stat(path, (error, stats) => {
+				if (stats.isFile()) {
+					if (type == "string") {
+						image = JSON.parse(image);
+					}
+					image.size = Core.util.toSize(stats['size'], true);
+					if (type == "string") {
+						image = JSON.stringify(image);
+					}
+
+					resolve(image);
+				} else {
+					reject(path.basename(path) + " is not a file");
+				}
+			});			
+		});
+	},
 	readFileFetch: function(params, callback) {
 		fs.readFile(params.path, (err, cachedImage) => {
 			if (!err) {
@@ -341,7 +403,12 @@ var Core = {
 				// Hit Cache
 				cachedImage.cache = "HIT";
 
-				callback(null, cachedImage);
+				Core.setSize(params.path, cachedImage).then((result) => {
+					callback(null, result);
+				}).catch((error) => {
+					callback(error);
+				});
+				
 			} else {
 
 				callback(err);
@@ -380,19 +447,36 @@ var Core = {
 		return JSON.parse(cachedImage);
 	},
 	readFile: function(image, options, callback) {
-		fs.readFile(Core.getFilePath(image, options), (error, results) => {
+		var path = Core.getFilePath(image, options);
+		fs.readFile(path, (error, results) => {
 			if (error) {
 				callback(error);
 			} else {
 				results = Core.backToString(results);
 
-				callback(null, results);
+				Core.setSize(path, results).then((result) => {
+					callback(null, result);
+				}).catch((error) => {
+					callback(error);
+				});
 			}
 		});
 	},
 	readFileSync: function(image, options) {
+		var path = Core.getFilePath(image, options);
+		var results = Core.backToString(fs.readFileSync(path));
 
-		return Core.backToString(fs.readFileSync(Core.getFilePath(image, options)));
+		var stats = fs.statSync(path);
+		if (stats.isFile()) {
+			results = JSON.parse(results);
+
+			results.size = Core.util.toSize(stats['size'], true);
+			results = JSON.stringify(results);
+			
+			return results;
+		} else {
+			throw Error("is not a files");
+		}
 	},
 	writeFile: function(params, callback) {
 		fs.writeFile(path.join(params.options.dir, params.fileName + params.options.extname), params.data, (error) => {
@@ -436,6 +520,24 @@ var Core = {
 					});
 				}
 			});
+		}
+	},
+	util: {
+		toSize: function(size, read) {
+			var thresh = read ? 1000 : 1024;
+			if(Math.abs(size) < thresh) {
+				return size + ' B';
+			}
+			var units = read
+				? ['kB','MB','GB','TB','PB','EB','ZB','YB']
+				: ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+			var u = -1;
+			do {
+				size /= thresh;
+				++u;
+			} while(Math.abs(size) >= thresh && u < units.length - 1);
+
+			return size.toFixed(1)+' '+units[u];
 		}
 	}
 }
