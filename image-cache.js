@@ -10,7 +10,7 @@ var fs = require('fs')
  * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com>
  */
 
-var imageCache = function () {
+var ImageCache = function () {
   this.options = {
     dir: path.join(__dirname, 'cache/'),
     compressed: false,
@@ -26,7 +26,7 @@ var imageCache = function () {
  * @example
  * setOptions({compressed: false});
  */
-imageCache.prototype.setOptions = function (options) {
+ImageCache.prototype.setOptions = function (options) {
   var self = this
 
   for (var option in options) {
@@ -47,14 +47,14 @@ imageCache.prototype.setOptions = function (options) {
  * isCached('http://foo.bar/foo.png', function(exist) { });
  * @return {boolean}
  */
-imageCache.prototype.isCached = function (image, callback) {
+ImageCache.prototype.isCached = function (image, callback) {
   var self = this
 
   fs.exists(Core.getFilePath(image, self.options), function (exists) {
     callback(exists)
   })
 }
-imageCache.prototype.isCachedSync = function (image) {
+ImageCache.prototype.isCachedSync = function (image) {
   var self = this
 
   return fs.existsSync(Core.getFilePath(image, self.options))
@@ -69,7 +69,7 @@ imageCache.prototype.isCachedSync = function (image) {
  * getCache('http://foo.bar/foo.png', function(error, results) { });
  * @return undefined
  */
-imageCache.prototype.getCache = function (image, callback) {
+ImageCache.prototype.getCache = function (image, callback) {
   var self = this
 
   Core.readFile(image, self.options, (error, results) => {
@@ -82,7 +82,7 @@ imageCache.prototype.getCache = function (image, callback) {
     }
   })
 }
-imageCache.prototype.Get = function (image) {
+ImageCache.prototype.Get = function (image) {
   var self = this
 
   return new Promise((resolve, reject) => {
@@ -97,7 +97,7 @@ imageCache.prototype.Get = function (image) {
     })
   })
 }
-imageCache.prototype.getCacheSync = function (image) {
+ImageCache.prototype.getCacheSync = function (image) {
   var self = this
 
   return JSON.parse(Core.readFileSync(image, self.options))
@@ -112,7 +112,7 @@ imageCache.prototype.getCacheSync = function (image) {
  * setCache(['http://foo.bar/foo.png'], function(error) { });
  * @return {boolean}
  */
-imageCache.prototype.setCache = function (images, callback) {
+ImageCache.prototype.setCache = function (images, callback) {
   var self = this
 
   images = Core.check(images, self.options)
@@ -142,7 +142,7 @@ imageCache.prototype.setCache = function (images, callback) {
     }
   })
 }
-imageCache.prototype.Set = function (images) {
+ImageCache.prototype.Set = function (images) {
   var self = this
 
   return new Promise((resolve, reject) => {
@@ -164,7 +164,9 @@ imageCache.prototype.Set = function (images) {
               },
               error => {
                 if (error) {
-                  reject(new Error('Error while write files ' + result.hashFile))
+                  reject(
+                    new Error('Error while write files ' + result.hashFile)
+                  )
                 }
               }
             )
@@ -177,7 +179,7 @@ imageCache.prototype.Set = function (images) {
   })
 }
 
-imageCache.prototype.fetchImages = function (images) {
+ImageCache.prototype.fetchImages = function (images) {
   var self = this
 
   return new Promise((resolve, reject) => {
@@ -221,7 +223,7 @@ imageCache.prototype.fetchImages = function (images) {
  * .delCache(images).then((error) => {});
  * @return Promise
  */
-imageCache.prototype.delCache = function (images) {
+ImageCache.prototype.delCache = function (images) {
   var self = this
 
   return new Promise((resolve, reject) => {
@@ -243,7 +245,7 @@ imageCache.prototype.delCache = function (images) {
  * flushCache(function(error) { });
  * @return undefined
  */
-imageCache.prototype.flushCache = function (callback) {
+ImageCache.prototype.flushCache = function (callback) {
   var self = this
 
   fs.readdir(self.options.dir, (error, files) => {
@@ -253,13 +255,19 @@ imageCache.prototype.flushCache = function (callback) {
     var targetFiles = []
 
     if (files.length === 0) {
-      callback('this folder is empty')
+      callback(new Error('this folder is empty'))
     } else {
       files.forEach(file => {
         if (path.extname(file) === self.options.extname) {
           targetFiles.push(self.options.dir + '/' + file)
         }
       })
+
+      var unlinkCache = function (callback) {
+        fs.unlinkSync(path)
+
+        callback(null, 'deleted')
+      }
 
       async.map(targetFiles, unlinkCache, function (error, results) {
         if (error) {
@@ -276,7 +284,7 @@ imageCache.prototype.flushCache = function (callback) {
     }
   })
 }
-imageCache.prototype.flushCacheSync = function () {
+ImageCache.prototype.flushCacheSync = function () {
   var self = this
 
   var files = fs.readdirSync(self.options.dir)
@@ -308,14 +316,12 @@ imageCache.prototype.flushCacheSync = function () {
 
 var Core = {
   check: function (images, options) {
-    /* Check params images to actualiy be Array data type
-		 */
+    /* Check params images to actualiy be Array data type */
     if (!Array.isArray(images)) {
       let temp = images
       images = [temp]
     }
-    /* Check is cache directory available
-		 */
+    /* Check is cache directory available */
     if (!Core.isDirExists(options)) {
       fs.mkdirSync(options.dir)
     }
@@ -377,13 +383,8 @@ var Core = {
       url
     )
   },
-  isFolderExists: function () {
+  isFolderExists: function (options) {
     return fs.existsSync(options.dir)
-  },
-  unlinkCache: function (callback) {
-    fs.unlinkSync(path)
-
-    callback('deleted')
   },
   backToString: function (content) {
     if (Buffer.isBuffer(content)) content = content.toString('utf8')
@@ -395,6 +396,9 @@ var Core = {
     var type = typeof image
     return new Promise((resolve, reject) => {
       fs.stat(path, (error, stats) => {
+        if (error) {
+          reject(error)
+        }
         if (stats.isFile()) {
           if (type === 'string') {
             image = JSON.parse(image)
@@ -406,7 +410,7 @@ var Core = {
 
           resolve(image)
         } else {
-          reject(path.basename(path) + ' is not a file')
+          reject(new Error(path.basename(path) + ' is not a file'))
         }
       })
     })
@@ -452,10 +456,9 @@ var Core = {
     )
   },
   deflate: function (data, options) {
+    var result = JSON.stringify(data)
     if (options.compressed) {
       result = pako.deflate(JSON.stringify(data), { to: 'string' })
-    } else {
-      result = JSON.stringify(data)
     }
 
     return result
@@ -575,4 +578,4 @@ var Core = {
   }
 }
 
-module.exports = new imageCache()
+module.exports = new ImageCache()
