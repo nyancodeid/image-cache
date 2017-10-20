@@ -7,7 +7,7 @@ var fs = require('fs')
 
 /**
  * image-cache - Image Cache Async with Base64
- * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
+ * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com>
  */
 
 var imageCache = function () {
@@ -27,10 +27,12 @@ var imageCache = function () {
  * setOptions({compressed: false});
  */
 imageCache.prototype.setOptions = function (options) {
-  self = this
+  var self = this
 
   for (var option in options) {
-    if (typeof self.options[option] === 'undefined') { throw Error("option '" + option + "' is not available") }
+    if (typeof self.options[option] === 'undefined') {
+      throw Error("option '" + option + "' is not available")
+    }
 
     self.options[option] = options[option]
   }
@@ -46,14 +48,14 @@ imageCache.prototype.setOptions = function (options) {
  * @return {boolean}
  */
 imageCache.prototype.isCached = function (image, callback) {
-  self = this
+  var self = this
 
   fs.exists(Core.getFilePath(image, self.options), function (exists) {
     callback(exists)
   })
 }
 imageCache.prototype.isCachedSync = function (image) {
-  self = this
+  var self = this
 
   return fs.existsSync(Core.getFilePath(image, self.options))
 }
@@ -68,7 +70,7 @@ imageCache.prototype.isCachedSync = function (image) {
  * @return undefined
  */
 imageCache.prototype.getCache = function (image, callback) {
-  self = this
+  var self = this
 
   Core.readFile(image, self.options, (error, results) => {
     if (!error) {
@@ -81,7 +83,7 @@ imageCache.prototype.getCache = function (image, callback) {
   })
 }
 imageCache.prototype.Get = function (image) {
-  self = this
+  var self = this
 
   return new Promise((resolve, reject) => {
     Core.readFile(image, self.options, (error, results) => {
@@ -96,7 +98,7 @@ imageCache.prototype.Get = function (image) {
   })
 }
 imageCache.prototype.getCacheSync = function (image) {
-  self = this
+  var self = this
 
   return JSON.parse(Core.readFileSync(image, self.options))
 }
@@ -111,7 +113,7 @@ imageCache.prototype.getCacheSync = function (image) {
  * @return {boolean}
  */
 imageCache.prototype.setCache = function (images, callback) {
-  self = this
+  var self = this
 
   images = Core.check(images, self.options)
 
@@ -141,7 +143,7 @@ imageCache.prototype.setCache = function (images, callback) {
   })
 }
 imageCache.prototype.Set = function (images) {
-  self = this
+  var self = this
 
   return new Promise((resolve, reject) => {
     images = Core.check(images, self.options)
@@ -176,7 +178,7 @@ imageCache.prototype.Set = function (images) {
 }
 
 imageCache.prototype.fetchImages = function (images) {
-  self = this
+  var self = this
 
   return new Promise((resolve, reject) => {
     images = Core.check(images, self.options)
@@ -213,14 +215,14 @@ imageCache.prototype.fetchImages = function (images) {
 
 /**
  * @description
- * delCache 
+ * delCache
  * @param {string|array} [images url]
  * @example
  * .delCache(images).then((error) => {});
  * @return Promise
  */
 imageCache.prototype.delCache = function (images) {
-  self = this
+  var self = this
 
   return new Promise((resolve, reject) => {
     images = Core.check(images, self.options)
@@ -242,7 +244,7 @@ imageCache.prototype.delCache = function (images) {
  * @return undefined
  */
 imageCache.prototype.flushCache = function () {
-  self = this
+  var self = this
 
   fs.readdir(options.dir, (error, files) => {
     var targetFiles = []
@@ -272,7 +274,7 @@ imageCache.prototype.flushCache = function () {
   })
 }
 imageCache.prototype.flushCacheSync = function () {
-  self = this
+  var self = this
 
   var files = fs.readdirSync(self.options.dir)
   var deletedFiles = 0
@@ -506,7 +508,7 @@ var Core = {
     )
   },
   fetchImageFunc: function (image, callback) {
-    self = this
+    var self = this
     self.options = image.options
 
     if (image.exists) {
