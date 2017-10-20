@@ -164,7 +164,7 @@ imageCache.prototype.Set = function (images) {
               },
               error => {
                 if (error) {
-                  reject('Error while write files ' + result.hashFile)
+                  reject(new Error('Error while write files ' + result.hashFile))
                 }
               }
             )
@@ -203,7 +203,7 @@ imageCache.prototype.fetchImages = function (images) {
       if (error) {
         reject(error)
       } else {
-        if (results.length == 1 && Array.isArray(results)) {
+        if (results.length === 1 && Array.isArray(results)) {
           results = results[0]
         }
 
@@ -243,17 +243,20 @@ imageCache.prototype.delCache = function (images) {
  * flushCache(function(error) { });
  * @return undefined
  */
-imageCache.prototype.flushCache = function () {
+imageCache.prototype.flushCache = function (callback) {
   var self = this
 
-  fs.readdir(options.dir, (error, files) => {
+  fs.readdir(self.options.dir, (error, files) => {
+    if (error) {
+      return callback(error)
+    }
     var targetFiles = []
 
-    if (files.length == 0) {
+    if (files.length === 0) {
       callback('this folder is empty')
     } else {
       files.forEach(file => {
-        if (path.extname(file) == self.options.extname) {
+        if (path.extname(file) === self.options.extname) {
           targetFiles.push(self.options.dir + '/' + file)
         }
       })
@@ -266,7 +269,7 @@ imageCache.prototype.flushCache = function () {
           callback(null, {
             deleted: targetFiles.length,
             totalFiles: files.length,
-            dir: options.dir
+            dir: self.options.dir
           })
         }
       })
@@ -279,11 +282,11 @@ imageCache.prototype.flushCacheSync = function () {
   var files = fs.readdirSync(self.options.dir)
   var deletedFiles = 0
 
-  if (files.length == 0) {
+  if (files.length === 0) {
     return { error: true, message: 'this folder is empty' }
   } else {
     files.forEach(function (file) {
-      if (path.extname(file) == self.options.extname) {
+      if (path.extname(file) === self.options.extname) {
         try {
           fs.unlinkSync(path.join(self.options.dir, file))
         } catch (e) {
@@ -298,7 +301,7 @@ imageCache.prototype.flushCacheSync = function () {
       error: false,
       deleted: deletedFiles,
       totalFiles: files.length,
-      dir: options.dir
+      dir: self.options.dir
     }
   }
 }
@@ -338,7 +341,7 @@ var Core = {
         if (error) {
           cb(error)
         } else {
-          if (res.statusCode.toString() == '200') {
+          if (res.statusCode.toString() === '200') {
             cb(null, {
               error: false,
               url: untouchUrl,
@@ -393,11 +396,11 @@ var Core = {
     return new Promise((resolve, reject) => {
       fs.stat(path, (error, stats) => {
         if (stats.isFile()) {
-          if (type == 'string') {
+          if (type === 'string') {
             image = JSON.parse(image)
           }
           image.size = Core.util.toSize(stats['size'], true)
-          if (type == 'string') {
+          if (type === 'string') {
             image = JSON.stringify(image)
           }
 
