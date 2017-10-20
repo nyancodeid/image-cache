@@ -50,6 +50,10 @@ ImageCache.prototype.setOptions = function (options) {
 ImageCache.prototype.isCached = function (image, callback) {
   var self = this
 
+  /*
+   *'fs.exists' was deprecated since v4.
+   * Use 'fs.stat()' or 'fs.access()'
+   */
   fs.exists(Core.getFilePath(image, self.options), function (exists) {
     callback(exists)
   })
