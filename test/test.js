@@ -1,15 +1,16 @@
 var assert = require('assert')
+var path = require('path')
 var imageCache = require('../image-cache')
 
 var url = 'http://webresource.c-ctrip.com/ResCRMOnline/R5/html5/images/57.png'
-var urlNone = 'http://webresource.c-ctrip.com/ResCRM/57.png'
+// var urlNone = 'http://webresource.c-ctrip.com/ResCRM/57.png'
 var urlYes =
   'https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg'
 
 describe('imageCache Test', function () {
   beforeEach(function () {
     imageCache.setOptions({
-      dir: __dirname + '/images/',
+      dir: path.join(__dirname, '/images/'),
       compressed: false
     })
   })
@@ -36,7 +37,7 @@ describe('imageCache Test', function () {
     })
     it('#getCacheSync() should be return error code ENOENT', function () {
       try {
-        var result = imageCache.getCacheSync(url)
+        imageCache.getCacheSync(url)
       } catch (error) {
         assert.equal(error.code, 'ENOENT')
       }
@@ -45,6 +46,7 @@ describe('imageCache Test', function () {
   describe('#Expect Success', function () {
     it('#getCache() should be return type Object', function (done) {
       imageCache.getCache(urlYes, function (error, result) {
+        if (error) return done(error)
         assert.equal(typeof result, 'object')
 
         done()
