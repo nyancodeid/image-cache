@@ -10,7 +10,7 @@ var fs = require('fs');
  * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
  */
 
-var imageCache = function() {
+var imageCache = () => {
     this.options = {
         dir: path.join(__dirname, "cache/"),
         compressed: false,
@@ -26,7 +26,7 @@ var imageCache = function() {
  * @example
  * setOptions({compressed: false});
  */
-imageCache.prototype.setOptions = function(options) {
+imageCache.prototype.setOptions = (options) => {
     self = this;
 
     for (var option in options) {
@@ -45,14 +45,14 @@ imageCache.prototype.setOptions = function(options) {
  * isCached('http://foo.bar/foo.png', function(exist) { });
  * @return {boolean}
  */
-imageCache.prototype.isCached = function(image, callback) {
+imageCache.prototype.isCached = (image, callback) => {
     self = this;
 
-    fs.exists(Core.getFilePath(image, self.options), function(exists) { 
+    fs.exists(Core.getFilePath(image, self.options), (exists) => { 
         callback(exists);
     });
 };
-imageCache.prototype.isCachedSync = function(image) {
+imageCache.prototype.isCachedSync = (image) => {
     self = this;
 
     return fs.existsSync(Core.getFilePath(image, self.options));
@@ -67,7 +67,7 @@ imageCache.prototype.isCachedSync = function(image) {
  * getCache('http://foo.bar/foo.png', function(error, results) { });
  * @return undefined
  */
-imageCache.prototype.getCache = function(image, callback) {
+imageCache.prototype.getCache = (image, callback) => {
     self = this;
 
     Core.readFile(image, self.options, (error, results) => {
@@ -80,7 +80,7 @@ imageCache.prototype.getCache = function(image, callback) {
         }
     });
 };
-imageCache.prototype.Get = function(image) {
+imageCache.prototype.Get = (image) => {
     self = this;
 
     return new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ imageCache.prototype.Get = function(image) {
         });
     });
 };
-imageCache.prototype.getCacheSync = function(image) {
+imageCache.prototype.getCacheSync = (image) => {
     self = this;
 
     return JSON.parse(Core.readFileSync(image, self.options));
@@ -110,7 +110,7 @@ imageCache.prototype.getCacheSync = function(image) {
  * setCache(['http://foo.bar/foo.png'], function(error) { });
  * @return {boolean}
  */
-imageCache.prototype.setCache = function(images, callback) {
+imageCache.prototype.setCache = (images, callback) => {
     self = this;
     
     images = Core.check(images, self.options);
@@ -137,7 +137,7 @@ imageCache.prototype.setCache = function(images, callback) {
         }
     });
 };
-imageCache.prototype.Set = function(images) {
+imageCache.prototype.Set = (images) => {
     self = this;
 
     return new Promise((resolve, reject) => {
@@ -169,14 +169,14 @@ imageCache.prototype.Set = function(images) {
     });
 }
 
-imageCache.prototype.fetchImages = function(images) {
+imageCache.prototype.fetchImages = (images) => {
     self = this;
 
     return new Promise((resolve, reject) => {
         images = Core.check(images, self.options);
 
         var imagesMore = [];
-        images.forEach(function(image) {
+        images.forEach((image) => {
             var fileName = (self.options.compressed) ? md5(image) + "_min" : md5(image); 
             var exists = fs.existsSync(self.options.dir + fileName + self.options.extname); 
             var url = image;
@@ -211,7 +211,7 @@ imageCache.prototype.fetchImages = function(images) {
  * .delCache(images).then((error) => {});
  * @return Promise
  */
-imageCache.prototype.delCache = function(images) {
+imageCache.prototype.delCache = (images) => {
     self = this;
 
     return new Promise((resolve, reject) => {
@@ -233,7 +233,7 @@ imageCache.prototype.delCache = function(images) {
  * flushCache(function(error) { });
  * @return undefined
  */
-imageCache.prototype.flushCache = function() {
+imageCache.prototype.flushCache = () => {
     self = this;
 
     fs.readdir(options.dir, (error, files) => {
@@ -248,7 +248,7 @@ imageCache.prototype.flushCache = function() {
                 }
             });
 
-            async.map(targetFiles, unlinkCache, function(error, results) {
+            async.map(targetFiles, unlinkCache, (error, results) => {
                 if (error) {
                     callback(error);
                 } else {
@@ -263,7 +263,7 @@ imageCache.prototype.flushCache = function() {
         }
     });
 };
-imageCache.prototype.flushCacheSync = function() {
+imageCache.prototype.flushCacheSync = () => {
     self = this;
 
     var files = fs.readdirSync(self.options.dir);
@@ -272,7 +272,7 @@ imageCache.prototype.flushCacheSync = function() {
     if (files.length == 0) {
         return {error: true, message: "this folder is empty"};
     } else {
-        files.forEach(function(file) {
+        files.forEach((file) => {
             if (path.extname(file) == self.options.extname) {
                 try {
                     fs.unlinkSync(path.join(self.options.dir, file));
@@ -294,7 +294,7 @@ imageCache.prototype.flushCacheSync = function() {
 };
 
 var Core = {
-    check: function(images, options) {
+    check: (images, options) => {
         /* Check params images to actualiy be Array data type
          */
         if (!Array.isArray(images)) {
@@ -309,23 +309,23 @@ var Core = {
 
         return images;
     },
-    isDirExists: function(options) {
+    isDirExists: (options) => {
 
         return fs.existsSync(options.dir);
     },
-    getFilePath: function(image, options) {
+    getFilePath: (image, options) => {
         var fileName = (options.compressed) ? md5(image) + "_min" : md5(image);
 
         return options.dir + fileName + options.extname;
     },
-    getImages: function(images, options, callback) {
-        var fetch = function(url, cb) {
+    getImages: (images, options, callback) => {
+        var fetch = (url, cb) => {
             var untouchUrl = url;
             if (options.googleCache) {
                 url = Core.getGoogleUrl(url);
             }
 
-            base64Img.requestBase64(url, function(error, res, body){
+            base64Img.requestBase64(url, (error, res, body) => {
                 if (error) {
                     cb(error);
                 } else {
@@ -349,7 +349,7 @@ var Core = {
                 }
             });
         }
-        async.map(images, fetch, function(error, results){
+        async.map(images, fetch, (error, results) => {
             if (error) {
                 console.error(error);
             } else {
@@ -357,28 +357,28 @@ var Core = {
             }
         });
     },
-    getGoogleUrl: function(url) {
+    getGoogleUrl: (url) => {
         return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
         + '?container=focus'
         + '&url=' + url
         ;
     },
-    isFolderExists: function() {
+    isFolderExists: () => {
 
         return fs.existsSync(options.dir);
     },
-    unlinkCache: function(callback) {
+    unlinkCache: (callback) => {
         fs.unlinkSync(path);
 
         callback("deleted");
     },
-    backToString: function(content) {
+    backToString: (content) => {
         if (Buffer.isBuffer(content)) content = content.toString('utf8');
         content = content.replace(/^\uFEFF/, '');
         
         return content;
     },
-    setSize: function(path, image) {
+    setSize: (path, image) => {
         var type = typeof image;
         return new Promise((resolve, reject) => {
             fs.stat(path, (error, stats) => {
@@ -398,7 +398,7 @@ var Core = {
             });         
         });
     },
-    readFileFetch: function(params, callback) {
+    readFileFetch: (params, callback) => {
         fs.readFile(params.path, (err, cachedImage) => {
             if (!err) {
                 cachedImage = Core.inflate(Core.backToString(cachedImage, params.options), params.options);
@@ -417,7 +417,7 @@ var Core = {
             }
         });
     },
-    writeFileFetch: function(params, callback) {
+    writeFileFetch: (params, callback) => {
         Core.writeFile({
             options: params.options,
             data: params.data,
@@ -432,7 +432,7 @@ var Core = {
             }
         });
     },
-    deflate: function(data, options) {
+    deflate: (data, options) => {
         if (options.compressed) {
             result = pako.deflate(JSON.stringify(data), { to: 'string' });
         } else {
@@ -441,14 +441,14 @@ var Core = {
 
         return result;
     },
-    inflate: function(cachedImage, options) {
+    inflate: (cachedImage, options) => {
         if (options.compressed) {
             cachedImage = pako.inflate(cachedImage, { to: 'string' });
         }
 
         return JSON.parse(cachedImage);
     },
-    readFile: function(image, options, callback) {
+    readFile: (image, options, callback) => {
         var path = Core.getFilePath(image, options);
         fs.readFile(path, (error, results) => {
             if (error) {
@@ -464,7 +464,7 @@ var Core = {
             }
         });
     },
-    readFileSync: function(image, options) {
+    readFileSync: (image, options) => {
         var path = Core.getFilePath(image, options);
         var results = Core.backToString(fs.readFileSync(path));
 
@@ -480,12 +480,12 @@ var Core = {
             throw Error("is not a files");
         }
     },
-    writeFile: function(params, callback) {
+    writeFile: (params, callback) => {
         fs.writeFile(path.join(params.options.dir, params.fileName + params.options.extname), params.data, (error) => {
             callback(error);
         });
     },
-    fetchImageFunc: function(image, callback) {
+    fetchImageFunc: (image, callback) => {
         self = this;
         self.options = image.options;
 
@@ -501,7 +501,7 @@ var Core = {
                 }
             });
         } else {
-            Core.getImages([ image.url ], self.options, function(error, results) {
+            Core.getImages([ image.url ], self.options, (error, results) => {
                 if (error) {
                     callback(error);
                 } else {
@@ -525,7 +525,7 @@ var Core = {
         }
     },
     util: {
-        toSize: function(size, read) {
+        toSize: (size, read) => {
             var thresh = read ? 1000 : 1024;
             if(Math.abs(size) < thresh) {
                 return size + ' B';
