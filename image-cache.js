@@ -26,13 +26,11 @@ var imageCache = function() {
  * @example
  * setOptions({compressed: false});
  */
-imageCache.prototype.setOptions = function(options) {
-	self = this;
-
+imageCache.prototype.setOptions = (options) => {
 	for (var option in options) {
-		if (typeof self.options[option] == "undefined") throw Error("option \'" + option + "\' is not available");
+		if (typeof this.options[option] == "undefined") throw Error("option \'" + option + "\' is not available");
 
-		self.options[option] = options[option];
+		this.options[option] = options[option];
 	}
 };
 
@@ -45,17 +43,13 @@ imageCache.prototype.setOptions = function(options) {
  * isCached('http://foo.bar/foo.png', function(exist) { });
  * @return {boolean}
  */
-imageCache.prototype.isCached = function(image, callback) {
-	self = this;
-
-	fs.exists(Core.getFilePath(image, self.options), function(exists) { 
+imageCache.prototype.isCached = (image, callback) => {
+	fs.stat(Core.getFilePath(image, this.options), function(exists) { 
 		callback(exists);
 	});
 };
-imageCache.prototype.isCachedSync = function(image) {
-	self = this;
-
-	return fs.existsSync(Core.getFilePath(image, self.options));
+imageCache.prototype.isCachedSync = (image) => {
+	return fs.statSync(Core.getFilePath(image, this.options));
 };
 
 /**
@@ -67,9 +61,7 @@ imageCache.prototype.isCachedSync = function(image) {
  * getCache('http://foo.bar/foo.png', function(error, results) { });
  * @return undefined
  */
-imageCache.prototype.getCache = function(image, callback) {
-	self = this;
-
+imageCache.prototype.getCache = (image, callback) => {
 	Core.readFile(image, self.options, (error, results) => {
 		if (!error) {
 			var output = Core.inflate(results, self.options);
@@ -80,13 +72,11 @@ imageCache.prototype.getCache = function(image, callback) {
 		}
 	});
 };
-imageCache.prototype.Get = function(image) {
-	self = this;
-
+imageCache.prototype.get = (image) => {
 	return new Promise((resolve, reject) => {
-		Core.readFile(image, self.options, (error, results) => {
+		Core.readFile(image, this.options, (error, results) => {
 			if (!error) {
-				var output = Core.inflate(results, self.options);
+				var output = Core.inflate(results, this.options);
 
 				resolve(output);
 			} else {
@@ -95,10 +85,9 @@ imageCache.prototype.Get = function(image) {
 		});
 	});
 };
-imageCache.prototype.getCacheSync = function(image) {
-	self = this;
+imageCache.prototype.getCacheSync = (image) => {
 
-	return JSON.parse(Core.readFileSync(image, self.options));
+	return JSON.parse(Core.readFileSync(image, this.options));
 };
 
 /**
@@ -110,23 +99,21 @@ imageCache.prototype.getCacheSync = function(image) {
  * setCache(['http://foo.bar/foo.png'], function(error) { });
  * @return {boolean}
  */
-imageCache.prototype.setCache = function(images, callback) {
-	self = this;
-	
-	images = Core.check(images, self.options);
+imageCache.prototype.setCache = (images, callback) => {	
+	images = Core.check(images, this.options);
 
-	Core.getImages(images, self.options, (error, results) => {
+	Core.getImages(images, this.options, (error, results) => {
 		if (error) {
 			callback(error);
 		} else {
 			results.forEach((result) => {
 				if (!result.error) {
-					let output = Core.deflate(result, self.options);
+					let output = Core.deflate(result, this.options);
 
 					Core.writeFile({
 						fileName: result.hashFile,
 						data: output,
-						options: self.options
+						options: this.options
 					}, (error) => {
 						callback(error);
 					});
@@ -137,24 +124,22 @@ imageCache.prototype.setCache = function(images, callback) {
 		}
 	});
 };
-imageCache.prototype.Set = function(images) {
-	self = this;
-
+imageCache.prototype.set = (images) => {
 	return new Promise((resolve, reject) => {
-		images = Core.check(images, self.options);
+		images = Core.check(images, this.options);
 
-		Core.getImages(images, self.options, (error, results) => {
+		Core.getImages(images, this.options, (error, results) => {
 			if (error) {
 				reject(error.message);
 			} else {
 				results.forEach((result) => {
 					if (!result.error) {
-						let output = Core.deflate(result, self.options);
+						let output = Core.deflate(result, this.options);
 
 						Core.writeFile({
 							fileName: result.hashFile,
 							data: output,
-							options: self.options
+							options: this.options
 						}, (error) => {
 							if (error) {
 								reject("Error while write files " + result.hashFile);
@@ -169,35 +154,49 @@ imageCache.prototype.Set = function(images) {
 	});
 }
 
-imageCache.prototype.fetchImages = function(images) {
-	self = this;
-
+imageCache.prototype.fetchImages = (images) => {
 	return new Promise((resolve, reject) => {
-		images = Core.check(images, self.options);
+		images = Core.check(images, this.options);
 
-		var imagesMore = [];
-		images.forEach(function(image) {
-			var fileName = (self.options.compressed) ? md5(image) + "_min" : md5(image); 
-			var exists = fs.existsSync(self.options.dir + fileName + self.options.extname); 
-			var url = image;
+		async.waterfall([
+			(callback) => {
+				let imagesMore = [];
 
-			imagesMore.push({
-				fileName: image,
-				exists: exists,
-				url: url,
-				options: self.options
-			});
-		});
+				async.each(images, (image, callbackEach) => {
+					let fileName = (this.options.compressed) ? md5(image) + "_min" : md5(image); 
+					let exists = fs.existsSync(this.options.dir + fileName + this.options.extname); 
+					let url = image;
 
-		async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
-			if (error) {
-				reject(error);
+					imagesMore.push({
+						fileName: image,
+						exists: exists,
+						url: url,
+						options: this.options
+					});
+
+					callbackEach(null);
+				}, (!err) => {
+					callback(null, imagesMore);
+				});
+			},
+			(imagesMore, callback) => {
+				async.map(imagesMore, Core.fetchImageFunc, (error, results) => {
+					if (error) {
+						callback(true);
+					} else {
+						if (results.length == 1 && Array.isArray(results)) {
+							results = results[0];
+						}
+
+						callback(null, results);
+					}
+				});
+			}
+		], (error, success) => {
+			(!error) {
+				resolve(success);
 			} else {
-				if (results.length == 1 && Array.isArray(results)) {
-					results = results[0];
-				}
-
-				resolve(results);
+				reject(error);
 			}
 		});
 	});
@@ -211,14 +210,12 @@ imageCache.prototype.fetchImages = function(images) {
  * .delCache(images).then((error) => {});
  * @return Promise
  */
-imageCache.prototype.delCache = function(images) {
-	self = this;
-
+imageCache.prototype.delCache = (images) => {
 	return new Promise((resolve, reject) => {
-		images = Core.check(images, self.options);
+		images = Core.check(images, this.options);
 
 		images.forEach((image) => {
-			fs.unlinkSync(Core.getFilePath(image, self.options));
+			fs.unlinkSync(Core.getFilePath(image, this.options));
 		});
 
 		resolve(null);
@@ -274,7 +271,7 @@ imageCache.prototype.flushCacheSync = function() {
 	} else {
 		files.forEach(function(file) {
 			if (path.extname(file) == self.options.extname) {
-				try	{
+				try {
 					fs.unlinkSync(path.join(self.options.dir, file));
 				} catch (e) {
 					return {error: true, message: e};
@@ -395,7 +392,7 @@ var Core = {
 				} else {
 					reject(path.basename(path) + " is not a file");
 				}
-			});			
+			});         
 		});
 	},
 	readFileFetch: function(params, callback) {
