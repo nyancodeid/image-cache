@@ -17,7 +17,7 @@ var imageCache = function() {
 		extname: '.cache',
 		googleCache: true
 	};
-};
+}
 
 /**
  * @description
@@ -27,6 +27,7 @@ var imageCache = function() {
  * setOptions({compressed: false});
  */
 imageCache.prototype.setOptions = (options) => {
+	console.log(this.options);
 
 	for (var option in options) {
 		if (typeof this.options[option] == "undefined") throw Error("option \'" + option + "\' is not available");
@@ -44,11 +45,10 @@ imageCache.prototype.setOptions = (options) => {
  * isCached('http://foo.bar/foo.png', function(exist) { });
  * @return {boolean}
  */
-imageCache.prototype.isCached = (image, callback) => {
-	self = this;
+imageCache.prototype.isCached = (image) => {
 
-	fs.exists(Core.getFilePath(image, self.options), (exists) => { 
-		callback(exists);
+	return new Promise((resolve, reject) => {
+		fs.stat(Core.getFilePath(image, this.options), resolve);
 	});
 };
 imageCache.prototype.isCachedSync = (image) => {
