@@ -206,12 +206,12 @@ class Core {
 		} else {
 			throw Error("is not a files");
 		}
-	},
+	}
 	writeFile(params, callback) {
 		fs.writeFile(path.join(this.options.dir, `${params.fileName} ${this.options.extname}`), params.data, (error) => {
 			callback(error);
 		});
-	},
+	}
 	fetchImageFunc(image, callback) {
 		if (image.exists) {
 			this.readFileFetch({
