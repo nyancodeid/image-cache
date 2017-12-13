@@ -53,9 +53,10 @@ class Core {
 	 * Syncronius function to get file path after joining dir, filename, 
 	 * and extention options
 	 *
+	 * @params String 	image
 	 * @return String
 	 */
-	getFilePath() {
+	getFilePath(image) {
 		var fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image);
 
 		return this.options.dir + fileName + this.options.extname;
@@ -298,7 +299,7 @@ class Core {
 	}
 }
 class imageCache extends Core {
-	isCached(image, callback) {
+	isCached(image) {
 		return new Promise((resolve, reject) => {
 			fs.stat(this.getFilePath(image), (exists) => { 
 				resolve(exists);
@@ -307,6 +308,9 @@ class imageCache extends Core {
 			});
 		});
 	};
+	isCachedSync() {
+		return fs.statSync(this.getFilePath(image));
+	}
 }
 
 module.exports = new imageCache;
