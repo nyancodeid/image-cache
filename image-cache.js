@@ -27,7 +27,7 @@ class Core {
 	 * @params	Array|String 	images 
 	 * @return	Array
 	 */
-	check(images) {
+	isArray(images) {
 		if (!Array.isArray(images)) {
 			let temp = images;
 			images = [temp];
@@ -143,7 +143,7 @@ class Core {
 				if (file.isFile()) {
 					if (type == "string") image = JSON.parse(image);
 
-					image.size = Core.util.toSize(file.size, true);
+					image.size = this.toSize(file.size, true);
 
 					if (type == "string") image = JSON.stringify(image);
 					resolve(image);
@@ -204,8 +204,8 @@ class Core {
 
 		return JSON.parse(cachedImage);
 	}
-	readFile(image, options, callback) {
-		var path = this.getFilePath(image, options);
+	readFile(image, callback) {
+		var path = this.getFilePath(image);
 		fs.readFile(path, (error, results) => {
 			if (error) {
 				callback(error);
@@ -220,7 +220,7 @@ class Core {
 			}
 		});
 	}
-	readFileSync(image, options) {
+	readFileSync(image) {
 		let path = this.getFilePath(image, options);
 		let results = this.backToString(fs.readFileSync(path));
 
@@ -228,9 +228,7 @@ class Core {
 		
 		if (stats.isFile()) {
 			results = JSON.parse(results);
-
 			results.size = this.toSize(stats.size, true);
-			results = JSON.stringify(results);
 			
 			return results;
 		} else {
@@ -297,17 +295,85 @@ class Core {
 	setOptions(options) {
 		this.options = Object.assign(this.options, options);
 	}
-}
-class imageCache extends Core {
-	isCached(image) {
-		return new Promise((resolve, reject) => {
-			fs.stat(this.getFilePath(image), (exists) => { 
-				resolve(exists);
+
+	getCache(image, callback) {
+		this.readFile(image, (error, results) => {
+			if (error) callback(error);
+
+			callback(null, this.inflate(results));
+		});
+	}
+	setCache(images, callback) {
+		images = this.isArray(images);
+
+		this.getImages(images, (error, results) => {
+			if (error) callback(error.message);
+
+			results.forEach((result) => {
+				if (!result.error) {
+					let output = this.deflate(result);
+
+					this.writeFile({
+						fileName: result.hashFile,
+						data: output
+					}, (error) => {
+						if (error) {
+							callback("Error while write files " + result.hashFile);
+						}
+					});
+				} else {
+					callback(null, results);
+				}
 			});
 		});
-	};
-	isCachedSync() {
+	}
+}
+class imageCache extends Core {
+	/* isCached
+	 * Async function check is image on argument available on cache
+	 *
+	 * @param String 	image
+	 * @return Promise
+	 */
+	isCached(image) {
+
+		return new Promise((resolve, reject) => {
+			fs.stat(this.getFilePath(image), (err, stats) => { 
+				if (err) reject(err);
+
+				resolve(true);
+			});
+		});
+	}
+	isCachedSync(image) {
+
 		return fs.statSync(this.getFilePath(image));
+	}
+
+	get(image, callback) {
+		if (_.isFunction(callback)) {
+
+			this.getCache(image, callback);
+		} else {
+			
+			return new Promise((resolve, reject) => {
+				this.getCache(image, function(err, results) {
+					if (err) reject(err);
+
+					resolve(results);
+				});
+			});
+		}
+	};
+	getSync(image) {
+
+		return this.readFileSync(image);
+	}
+
+	set(images) {
+		return new Promise((resolve, reject) => {
+			
+		});
 	}
 }
 
