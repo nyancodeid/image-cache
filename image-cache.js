@@ -39,7 +39,7 @@ class Core {
 	isDirExists() {
 
 		return fs.existsSync(this.options.dir);
-	},
+	}
 	getFilePath() {
 		var fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image);
 
@@ -280,6 +280,4 @@ class imageCache extends Core {
 	};
 }
 
-var imageCached = new imageCache;
-
-	imageCached.cache();
+module.exports = new imageCache;
