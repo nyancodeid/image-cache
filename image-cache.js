@@ -303,8 +303,6 @@ class imageCache extends Core {
 		return new Promise((resolve, reject) => {
 			fs.stat(this.getFilePath(image), (exists) => { 
 				resolve(exists);
-			}).catch((e) => {
-				reject(e);
 			});
 		});
 	};
