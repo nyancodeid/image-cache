@@ -189,7 +189,7 @@ class Core {
 				});
 			}
 		});
-	},
+	}
 	readFileSync(image, options) {
 		let path = this.getFilePath(image, options);
 		let results = this.backToString(fs.readFileSync(path));
