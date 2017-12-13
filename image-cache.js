@@ -21,9 +21,13 @@ class Core {
 		};
 	}
 
+	/* Check params images to actualiy be Array data type
+	 * and convert them into Array data
+	 *
+	 * @params	Array|String 	images 
+	 * @return	Array
+	 */
 	check(images) {
-		/* Check params images to actualiy be Array data type
-		 */
 		if (!Array.isArray(images)) {
 			let temp = images;
 			images = [temp];
@@ -36,18 +40,36 @@ class Core {
 
 		return images;
 	}
+	/* isDirExists 
+	 * Synchronius function to check is path on dir options is a Directory
+	 *
+	 * @return Object
+	 */
 	isDirExists() {
 
-		return fs.existsSync(this.options.dir);
+		return fs.statsSync(this.options.dir);
 	}
+	/* getFilePath
+	 * Syncronius function to get file path after joining dir, filename, 
+	 * and extention options
+	 *
+	 * @return String
+	 */
 	getFilePath() {
 		var fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image);
 
 		return this.options.dir + fileName + this.options.extname;
 	}
+	/* getImages
+	 * Async function to get every images with base64 format
+	 *
+	 * @params Array 		images
+	 * @params Function 	callback
+	 * @return Callback 	(error, results)	Boolean, Object
+	 */
 	getImages(images, callback) {
 		let fetch = (url, cb) => {
-			var untouchUrl = url;
+			var tempUri = url;
 			if (this.options.googleCache) {
 				url = this.getGoogleUrl(url);
 			}
@@ -59,16 +81,16 @@ class Core {
 					if (res.statusCode.toString() == "200") {
 						cb(null, {
 							error: false,
-							url: untouchUrl,
+							url: tempUri,
 							timestamp: new Date().getTime(),
-							hashFile: md5(untouchUrl),
+							hashFile: md5(tempUri),
 							compressed: this.options.compressed,
 							data: body
 						});
 					} else {
 						cb(null, {
 							error: true,
-							url: untouchUrl,
+							url: tempUri,
 							statusCode: res.statusCode,
 							statusMessage: res.statusMessage
 						});
@@ -78,22 +100,29 @@ class Core {
 		}
 		async.map(images, fetch, function(error, results){
 			if (error) {
-				console.error(error);
+				callback(true);
 			} else {
 				callback(null, results);
 			}
 		});
 	}
+	/* getGoogleUrl
+	 * Sync function get joined url 
+	 *
+	 * @params String 	url 
+	 * @return String
+	 */
 	getGoogleUrl(url) {
 		return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
 		+ '?container=focus'
 		+ '&url=' + url
 		;
 	}
-	isFolderExists() {
-
-		return fs.existsSync(this.options.dir);
-	}
+	/* unlinkCache
+	 * Sync function remove cache file using `fs`
+	 * @params Function 	callback 
+	 * @return Type
+	 */
 	unlinkCache(callback) {
 		fs.unlinkSync(path);
 
