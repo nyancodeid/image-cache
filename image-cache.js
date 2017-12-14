@@ -29,6 +29,9 @@ class Core {
 		};
 	}
 
+	/* Utility
+	 * list of utility
+	 */
 	equal(a, b) {
 		return (a == b);
 	}
@@ -90,7 +93,7 @@ class Core {
 				if (error) {
 					cb(error);
 				} else {
-					if (res.statusCode.toString() == "200") {
+					if (equal(res.statusCode.toString(), "200")) {
 						cb(null, {
 							error: false,
 							url: tempUri,
@@ -156,11 +159,11 @@ class Core {
 		return new Promise((resolve, reject) => {
 			fs.stat(path, (error, file) => {
 				if (file.isFile()) {
-					if (type == "string") image = JSON.parse(image);
+					if (equal(type, "string")) image = JSON.parse(image);
 
 					image.size = this.toSize(file.size, true);
 
-					if (type == "string") image = JSON.stringify(image);
+					if (equal(type, "string")) image = JSON.stringify(image);
 					resolve(image);
 				} else {
 					reject(path.basename(path) + " is not a file");
@@ -338,7 +341,7 @@ class Core {
 			if (stats) {
 				callback(null, true);
 			} else {
-				if (err.code == "ENOENT") {
+				if (equal(err.code, "ENOENT")) {
 					callback(null, false);
 				}
 			}
@@ -418,7 +421,7 @@ class Core {
 					if (error) {
 						callback(true);
 					} else {
-						if (results.length == 1 && Array.isArray(results)) {
+						if (equal(results.length, 1) && Array.isArray(results)) {
 							results = results[0];
 						}
 
@@ -440,7 +443,7 @@ class Core {
 		fs.readdir(this.options.dir, (error, files) => {
 			var targetFiles = [];
 
-			if (files.length == 0) {
+			if (equal(files.length, 0)) {
 				/**
 				 * Callback error when `folder empty`
 				 * @return Object
@@ -451,7 +454,7 @@ class Core {
 				});
 			} else {
 				files.forEach((file) => {
-					if (path.extname(file) == self.options.extname) {
+					if (equal(path.extname(file), self.options.extname)) {
 						targetFiles.push(self.options.dir + "/" + file);
 					}
 				});
@@ -599,7 +602,7 @@ class imageCache extends Core {
 		var files = fs.readdirSync(this.options.dir);
 		var deletedFiles = 0;
 
-		if (files.length == 0) {
+		if (equal(files.length, 0)) {
 			throw new Error({
 				message: `ERR_EMPTY: ${this.options.dir} is empty folder`,
 				code: `ERR_EMPTY`
@@ -608,7 +611,7 @@ class imageCache extends Core {
 			for (let $index in files) {
 				let file = files[$index];
 
-				if (path.extname(file) == this.options.extname) {
+				if (equal(path.extname(file), this.options.extname)) {
 					try {
 						fs.unlinkSync(path.join(this.options.dir, file));
 					} catch (e) {
