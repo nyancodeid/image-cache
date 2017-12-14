@@ -83,7 +83,7 @@ class Core {
 	 * @return Callback 	(error, results)	Boolean, Object
 	 */
 	getImages(images, callback) {
-		let fetch = (url, cb) => {
+		let fetch = (url, callback) => {
 			var tempUri = url;
 			if (this.options.googleCache) {
 				url = this.getGoogleUrl(url);
@@ -91,10 +91,10 @@ class Core {
 
 			base64Img.requestBase64(url, function(error, res, body){
 				if (error) {
-					cb(error);
+					callback(error);
 				} else {
 					if (this.equal(res.statusCode.toString(), "200")) {
-						cb(null, {
+						callback(null, {
 							error: false,
 							url: tempUri,
 							timestamp: new Date().getTime(),
@@ -103,7 +103,7 @@ class Core {
 							data: body
 						});
 					} else {
-						cb(null, {
+						callback(null, {
 							error: true,
 							url: tempUri,
 							statusCode: res.statusCode,
@@ -121,17 +121,44 @@ class Core {
 			}
 		});
 	}
+	/* stringToTime
+	 * convert string to time, for example 1w => 604800
+	 * @params String 		time
+	 * @return Integer 		second
+	 */
+	stringToTime(time) {
+		let weeks = time.toLowerCase().match(/([\d]+)w/);
+		let days = time.toLowerCase().match(/([\d]+)d/);
+		let hours = time.toLowerCase().match(/([\d]+)h/);
+		let minutes = time.toLowerCase().match(/([\d]+)m/);
+	
+		if (weeks) {
+			return weeks[1] * 7 * 24 * 60 * 60;
+		} else if (days) {
+			return days[1] * 24 * 60 * 60;
+		} else if (hours) {
+			return hours[1] * 60 * 60;
+		} else if (minutes) {
+			return minutes[1] * 60;
+		}
+	}
 	/* getGoogleUrl
 	 * Sync function get joined url 
 	 *
 	 * @params String 	url 
 	 * @return String
 	 */
-	getGoogleUrl(url) {
-		return 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
-		+ '?container=focus'
-		+ '&url=' + url
-		;
+	getGoogleUrl(url, options) {
+		let urls = 'https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy'
+					+ '?container=focus'
+					+ '&url=' + url
+					;
+		
+		if (!_.isNull(options)) {
+			urls += `&resize_w=${options.width}`
+		}
+
+		return urls;
 	}
 	/* unlinkCache
 	 * Sync function remove cache file using `fs`
@@ -478,6 +505,10 @@ class Core {
 		});
 	}
 }
+
+/* imageCache class
+ * imageCache extends from Core
+ */
 class imageCache extends Core {
 	/* isCached
 	 * Async function check is image on argument available on cache
@@ -504,7 +535,7 @@ class imageCache extends Core {
 		try	{
 			fs.statSync(this.getFilePath(image));
 		} catch(e) {
-			if (this.this.equal(e.code, 'ENOENT')) {
+			if (this.equal(e.code, 'ENOENT')) {
 				return false;
 			}
 		}
