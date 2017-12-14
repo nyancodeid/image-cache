@@ -155,7 +155,8 @@ class Core {
 					;
 		
 		if (!_.isNull(options)) {
-			urls += `&resize_w=${options.width}`
+			if (!_.isNull(options.width)) urls += `&resize_w=${options.width}`;
+			if (!_.isNull(options.refresh)) urls += `&refresh=${options.refresh}`;
 		}
 
 		return urls;
