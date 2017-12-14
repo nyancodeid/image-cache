@@ -13,6 +13,14 @@ const _ = require('underscore');
 
 class Core {
 	constructor(args) {
+		this.eventProvider = {
+			onGet: function() {},
+			onSet: function() {},
+			onRemove: function() {},
+			onFlush: function() {},
+			onFetch: function() {},
+			onError: function() {}
+		}
 		this.options = {
 			dir: path.join(__dirname, "cache/"),
 			compressed: false,
@@ -21,6 +29,9 @@ class Core {
 		};
 	}
 
+	equal(a, b) {
+		return (a == b);
+	}
 	/* Check params images to actualiy be Array data type
 	 * and convert them into Array data
 	 *
@@ -125,9 +136,13 @@ class Core {
 	 * @return Type
 	 */
 	unlinkCache(callback) {
-		fs.unlinkSync(path);
+		try	{
+			fs.unlinkSync(path);
+		} catch(e) {
+			callback(e);
+		}
 
-		callback(true);
+		callback(null);
 	}
 	backToString(content) {
 		if (Buffer.isBuffer(content)) content = content.toString('utf8');
@@ -198,6 +213,7 @@ class Core {
 		return result;
 	}
 	inflate(cachedImage) {
+		console.log(typeof cachedImage);
 		if (this.options.compressed) {
 			cachedImage = pako.inflate(cachedImage, { to: 'string' });
 		}
@@ -221,7 +237,7 @@ class Core {
 		});
 	}
 	readFileSync(image) {
-		let path = this.getFilePath(image, options);
+		let path = this.getFilePath(image);
 		let results = this.backToString(fs.readFileSync(path));
 
 		let stats = fs.statSync(path);
@@ -232,7 +248,10 @@ class Core {
 			
 			return results;
 		} else {
-			throw Error("is not a files");
+			throw new Error({
+				message: `ERR_FILE: ${path} is not a file`,
+				code: `ERR_FILE`
+			});
 		}
 	}
 	writeFile(params, callback) {
@@ -240,7 +259,7 @@ class Core {
 			callback(error);
 		});
 	}
-	fetchImagesChild(image, callback) {
+	fetchImage(image, callback) {
 		if (image.exists) {
 			this.readFileFetch({
 				path: this.getFilePath(image.fileName)
@@ -307,17 +326,38 @@ class Core {
 
 
 	setOptions(options) {
+
 		this.options = Object.assign(this.options, options);
 	}
 
-	getCache(image, callback) {
-		this.readFile(image, (error, results) => {
-			if (error) callback(error);
+	isCachedChild(image, callback) {
+		fs.stat(this.getFilePath(image), (err, stats) => { 
+			/* Represented from Object into Boolean
+			 */	
 
-			callback(null, this.inflate(results));
+			if (stats) {
+				callback(null, true);
+			} else {
+				if (err.code == "ENOENT") {
+					callback(null, false);
+				}
+			}
 		});
 	}
-	setCache(images, callback) {
+	getCacheChild(image, callback) {
+		this.eventProvider.onGet();
+
+		this.readFile(image, (error, results) => {
+			if (error) {
+				callback(error);
+			} else {
+				callback(null, this.inflate(results));
+			}
+		});
+	}
+	setCacheChild(images, callback) {
+		this.eventProvider.onSet();
+
 		images = this.isArray(images);
 
 		this.getImages(images, (error, results) => {
@@ -330,7 +370,9 @@ class Core {
 			}
 		});
 	}
-	removeCache(images, callback) {
+	removeCacheChild(images, callback) {
+		this.eventProvider.onRemove();
+
 		images = this.isArray(images);
 
 		images.forEach((image) => {
@@ -346,7 +388,9 @@ class Core {
 		 */
 		callback(null, images);
 	}
-	fetchImages(images, callback) {
+	fetchImagesChild(images, callback) {
+		this.eventProvider.onFetch();
+
 		images = this.isArray(images);
 
 		async.waterfall([
@@ -370,7 +414,7 @@ class Core {
 				});
 			},
 			(imagesMore, callback) => {
-				async.map(imagesMore, this.fetchImagesChild, (error, results) => {
+				async.map(imagesMore, this.fetchImage, (error, results) => {
 					if (error) {
 						callback(true);
 					} else {
@@ -383,10 +427,50 @@ class Core {
 				});
 			}
 		], (error, success) => {
-			(!error) {
+			if (!error) {
 				callback(null, success);
 			} else {
 				callback(error);
+			}
+		});
+	}
+	flushCacheChild(callback) {
+		this.eventProvider.onFlush();
+
+		fs.readdir(this.options.dir, (error, files) => {
+			var targetFiles = [];
+
+			if (files.length == 0) {
+				/**
+				 * Callback error when `folder empty`
+				 * @return Object
+				 */
+				callback({
+					message: `ERR_EMPTY: ${this.options.dir} is empty folder`,
+					code: `ERR_EMPTY`
+				});
+			} else {
+				files.forEach((file) => {
+					if (path.extname(file) == self.options.extname) {
+						targetFiles.push(self.options.dir + "/" + file);
+					}
+				});
+
+				async.map(targetFiles, this.unlinkCache, function(error, results) {
+					if (error) {
+						callback(error);
+					} else {
+						/**
+						 * Callback onSuccess
+						 * @return Object
+						 */
+						callback(null, {
+							deleted: targetFiles.length,
+							totalFiles: files.length,
+							dir: options.dir
+						});
+					}
+				});
 			}
 		});
 	}
@@ -398,29 +482,41 @@ class imageCache extends Core {
 	 * @param String 	image
 	 * @return Promise
 	 */
-	isCached(image) {
+	isCached(image, callback) {
+		if (_.isFunction(callback)) {
 
-		return new Promise((resolve, reject) => {
-			fs.stat(this.getFilePath(image), (err, stats) => { 
-				if (err) reject(err);
+			this.isCachedChild(image, callback);
+		} else {
+			
+			return new Promise((resolve, reject) => {
+				this.isCachedChild(image, function(err, exists) {
+					if (err) reject(err);
 
-				resolve(true);
+					resolve(exists);
+				});
 			});
-		});
+		}
 	}
 	isCachedSync(image) {
+		try	{
+			fs.statSync(this.getFilePath(image));
+		} catch(e) {
+			if (this.equal(e.code, 'ENOENT')) {
+				return false;
+			}
+		}
 
-		return fs.statSync(this.getFilePath(image));
+		return true;
 	}
 
 	get(image, callback) {
 		if (_.isFunction(callback)) {
 
-			this.getCache(image, callback);
+			this.getCacheChild(image, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.getCache(image, function(err, results) {
+				this.getCacheChild(image, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -429,18 +525,21 @@ class imageCache extends Core {
 		}
 	};
 	getSync(image) {
-
-		return this.readFileSync(image);
+		try	{
+			return this.readFileSync(image);
+		} catch(e) {
+			return e;
+		}
 	}
 
 	set(images, callback) {
 		if (_.isFunction(callback)) {
 
-			this.setCache(images, callback);
+			this.setCacheChild(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.setCache(images, function(err, results) {
+				this.setCacheChild(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -452,11 +551,11 @@ class imageCache extends Core {
 	fetch(images, callback) {
 		if (_.isFunction(callback)) {
 
-			this.fetchImages(images, callback);
+			this.fetchImagesChild(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.fetchImages(images, function(err, results) {
+				this.fetchImagesChild(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -468,16 +567,90 @@ class imageCache extends Core {
 	remove(images) {
 		if (_.isFunction(callback)) {
 
-			this.removeCache(images, callback);
+			this.removeCacheChild(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.removeCache(images, function(err, results) {
+				this.removeCacheChild(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
 				});
 			});
+		}
+	}
+
+	flush() {
+		if (_.isFunction(callback)) {
+
+			this.flushCacheChild(callback);
+		} else {
+			
+			return new Promise((resolve, reject) => {
+				this.flushCacheChild(function(err, results) {
+					if (err) reject(err);
+
+					resolve(results);
+				});
+			});
+		}
+	}
+	flushSync() {
+		var files = fs.readdirSync(this.options.dir);
+		var deletedFiles = 0;
+
+		if (files.length == 0) {
+			throw new Error({
+				message: `ERR_EMPTY: ${this.options.dir} is empty folder`,
+				code: `ERR_EMPTY`
+			});
+		} else {
+			for (let $index in files) {
+				let file = files[$index];
+
+				if (path.extname(file) == this.options.extname) {
+					try {
+						fs.unlinkSync(path.join(this.options.dir, file));
+					} catch (e) {
+						throw new Error(e);
+					} finally {
+						deletedFiles++;
+					}
+				}
+			}
+
+			return {
+				error: false,
+				deleted: deletedFiles,
+				totalFiles: files.length,
+				dir: options.dir
+			}
+		}
+	}
+
+	on(event, callback) {
+		switch(event) {
+			case 'get':
+				if (_.isFunction(callback)) this.eventProvider.onGet = callback;
+				break;
+			case 'set':
+				if (_.isFunction(callback)) this.eventProvider.onSet = callback;
+				break;
+			case 'fetch':
+				if (_.isFunction(callback)) this.eventProvider.onFetch = callback;
+				break;
+			case 'remove':
+				if (_.isFunction(callback)) this.eventProvider.onRemove = callback;
+				break;
+			case 'flush':
+				if (_.isFunction(callback)) this.eventProvider.onFlush = callback;
+				break;
+			default:
+				throw new Error({
+					message: `ERR_EVENT: undefined event name '${event}'`,
+					code: `ERR_EVENT`
+				});
+				break;
 		}
 	}
 }
