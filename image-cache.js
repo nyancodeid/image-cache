@@ -47,7 +47,7 @@ class Core {
 	 */
 	isDirExists() {
 
-		return fs.statsSync(this.options.dir);
+		return fs.statSync(this.options.dir);
 	}
 	/* getFilePath
 	 * Syncronius function to get file path after joining dir, filename, 
@@ -101,7 +101,7 @@ class Core {
 		}
 		async.map(images, fetch, function(error, results){
 			if (error) {
-				callback(true);
+				callback(error);
 			} else {
 				callback(null, results);
 			}
@@ -240,7 +240,7 @@ class Core {
 			callback(error);
 		});
 	}
-	fetchImageFunc(image, callback) {
+	fetchImagesChild(image, callback) {
 		if (image.exists) {
 			this.readFileFetch({
 				path: this.getFilePath(image.fileName)
@@ -290,6 +290,20 @@ class Core {
 
 		return size.toFixed(1)+' '+units[u];
 	}
+	filterToWrite(result) {
+		if (result.error) callback("Error while getting images");
+
+		this.writeFile({
+			fileName: result.hashFile,
+			data: this.deflate(result)
+		}, (error) => {
+			if (error) {
+				callback("Error while write files " + result.hashFile);
+			} else {
+				callback(null, result);
+			}
+		});
+	}
 
 
 	setOptions(options) {
@@ -307,24 +321,73 @@ class Core {
 		images = this.isArray(images);
 
 		this.getImages(images, (error, results) => {
-			if (error) callback(error.message);
+			if (!error) {
 
-			results.forEach((result) => {
-				if (!result.error) {
-					let output = this.deflate(result);
+				results.forEach(this.filterToWrite);
+			} else {
 
-					this.writeFile({
-						fileName: result.hashFile,
-						data: output
-					}, (error) => {
-						if (error) {
-							callback("Error while write files " + result.hashFile);
-						}
+				callback(error.message);
+			}
+		});
+	}
+	removeCache(images, callback) {
+		images = this.isArray(images);
+
+		images.forEach((image) => {
+			try	{
+				fs.unlinkSync(this.getFilePath(image));
+			} catch(e) {
+				callback(e);
+			}
+		});
+
+		/* Callback onSuccess
+		 * `images` will be send back into resolve
+		 */
+		callback(null, images);
+	}
+	fetchImages(images, callback) {
+		images = this.isArray(images);
+
+		async.waterfall([
+			(callback) => {
+				let imagesMore = [];
+
+				async.each(images, (image, callbackEach) => {
+					let fileName = this.getFilePath(image);
+					let exists = (fs.statSync(filename)) ? true : false; 
+					let url = image;
+
+					imagesMore.push({
+						fileName: image,
+						exists: exists,
+						url: url
 					});
-				} else {
-					callback(null, results);
-				}
-			});
+
+					callbackEach(null);
+				}, (err) => {
+					if (!err) callback(null, imagesMore);
+				});
+			},
+			(imagesMore, callback) => {
+				async.map(imagesMore, this.fetchImagesChild, (error, results) => {
+					if (error) {
+						callback(true);
+					} else {
+						if (results.length == 1 && Array.isArray(results)) {
+							results = results[0];
+						}
+
+						callback(null, results);
+					}
+				});
+			}
+		], (error, success) => {
+			(!error) {
+				callback(null, success);
+			} else {
+				callback(error);
+			}
 		});
 	}
 }
@@ -370,10 +433,52 @@ class imageCache extends Core {
 		return this.readFileSync(image);
 	}
 
-	set(images) {
-		return new Promise((resolve, reject) => {
+	set(images, callback) {
+		if (_.isFunction(callback)) {
+
+			this.setCache(images, callback);
+		} else {
 			
-		});
+			return new Promise((resolve, reject) => {
+				this.setCache(images, function(err, results) {
+					if (err) reject(err);
+
+					resolve(results);
+				});
+			});
+		}
+	}
+
+	fetch(images, callback) {
+		if (_.isFunction(callback)) {
+
+			this.fetchImages(images, callback);
+		} else {
+			
+			return new Promise((resolve, reject) => {
+				this.fetchImages(images, function(err, results) {
+					if (err) reject(err);
+
+					resolve(results);
+				});
+			});
+		}
+	}
+
+	remove(images) {
+		if (_.isFunction(callback)) {
+
+			this.removeCache(images, callback);
+		} else {
+			
+			return new Promise((resolve, reject) => {
+				this.removeCache(images, function(err, results) {
+					if (err) reject(err);
+
+					resolve(results);
+				});
+			});
+		}
 	}
 }
 
