@@ -11,6 +11,9 @@ const _ = require('underscore');
  * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
  */
 
+/* Core class
+ * imageCache Core function
+ */
 class Core {
 	constructor(args) {
 		this.eventProvider = {
@@ -244,7 +247,6 @@ class Core {
 		return result;
 	}
 	inflate(cachedImage) {
-		console.log(typeof cachedImage);
 		if (this.options.compressed) {
 			cachedImage = pako.inflate(cachedImage, { to: 'string' });
 		}

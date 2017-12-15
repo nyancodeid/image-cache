@@ -19,60 +19,68 @@ describe('imageCache Test', function() {
 		});
 	});
 
-	describe('#Expect Error', function() {
-		describe('#Check is file cached', function() {
-			it('#isCached() {Callback} should be return false', function(done) {
-				imageCache.isCached(url, function(err, exist) {
-					assert.equal(exist, false);
+	describe('#Check is file cached', function() {
+		/* isCached with Callback
+		 * test isCached call with async function using callback. 
+		 *
+		 * @expect Boolean 		false
+		 */
+		it('#isCached() {Callback} should be return false', function(done) {
+			imageCache.isCached(url, function(err, exist) {
+				assert.equal(exist, false);
 
-					done();
-				});
-			});
-			it('#isCached() {Promise} should be return false', function(done) {
-				imageCache.isCached(url).then((exist) => {
-					assert.equal(exist, false);
-
-					done();
-				}).catch((e) => {
-					done();
-				});
-			});
-			it('#isCachedSync() {Try} should be return false', function() {
-				var exists = imageCache.isCachedSync(url);
-				
-				assert.equal(exists, false);
+				done();
 			});
 		});
-		describe('#Get file from cached', function() {
-			it('#get() {Callback} should be return error code ENOENT', function(done) {
-				imageCache.get(url, function(error, result) {
-					assert.equal(error.code, "ENOENT");
+		/* isCached with Callback
+		 * test isCached call with async function using Promise. 
+		 *
+		 * @expect Boolean 		true
+		 */
+		it('#isCached() {Promise} should be return true', function(done) {
+			imageCache.isCached(urlYes).then((exist) => {
+				assert.equal(exist, true);
 
-					done();
-				});
-			});
-			it('#get() {Promise} should be return error code ENOENT', function(done) {
-				imageCache.get(url).catch((error) => {
-					assert.equal(error.code, "ENOENT");
-
-					done();
-				});
-			});
-			it('#getSync() should be return error code ENOENT', function() {
-				var result = imageCache.getSync(url);
-				
-				assert.equal(result.code, "ENOENT");
+				done();
+			}).catch((e) => {
+				done();
 			});
 		});
-		
+		/* isCachedSync
+		 * test isCachedSync call with sync function. 
+		 *
+		 * @expect Boolean 		false
+		 */
+		it('#isCachedSync() {Try} should be return false', function() {
+			var exists = imageCache.isCachedSync(url);
+			
+			assert.equal(exists, false);
+		});
 	});
-	describe('#Expect Success', function() {
-		// it('#getCache() should be return type Object', function(done) {
-		// 	imageCache.getCache(urlYes, function(error, result) {
-		// 		assert.equal(typeof result, "object");
+	describe('#Get file from cached', function() {
+		it('#get() {Callback} should be return error code ENOENT', function(done) {
+			imageCache.get(url, function(error, result) {
+				assert.equal(error.code, "ENOENT");
 
-		// 		done();
-		// 	});
-		// });
+				done();
+			});
+		});
+		it('#get() {Promise} should be return object without error', function(done) {
+			imageCache.get(urlYes).then((result) => {
+				assert.equal(typeof result, "object");
+				assert.equal(result.error, false);
+
+				done();
+			}).catch((error) => {
+				assert.notEqual(error.code, "ENOENT");
+
+				done();
+			});
+		});
+		it('#getSync() should be return error code ENOENT', function() {
+			var result = imageCache.getSync(url);
+			
+			assert.equal(result.code, "ENOENT");
+		});
 	});
 });
