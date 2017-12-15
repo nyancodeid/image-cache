@@ -3,9 +3,8 @@
  */
 
 const imageCache = require('../image-cache');
+const Core = require('../lib/core');
 const assert = require('assert');
-
-
 
 var url = 'http://webresource.c-ctrip.com/ResCRMOnline/R5/html5/images/57.png';
 var urlYes = "https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg";
@@ -81,6 +80,34 @@ describe('imageCache Test', function() {
 			var result = imageCache.getSync(url);
 			
 			assert.equal(result.code, "ENOENT");
+		});
+	});
+	describe('#fetch a image ', function() {
+		it('#fetch() {Callback} should be return false', function(done) {
+			imageCache.fetch(urlNone, (err, result) => {
+				assert.notEqual(err, null);
+
+				done();
+			});
+		});
+		it('#fetch() {Promise} should be return false', function(done) {
+			imageCache.fetch(urlYes).then((result) => {
+				assert.equal(result.error, false);
+
+				done();
+			});
+		});
+	});
+	describe('#event test', function() {
+		it('#onGet event', function(done) {
+			imageCache.on('get', function(data) {
+				assert.equal(typeof data, "object");
+
+				done();
+			});
+			imageCache.get(urlYes).then((result) => {
+				assert.equal(result.error, false);
+			});
 		});
 	});
 });
