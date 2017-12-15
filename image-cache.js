@@ -68,14 +68,14 @@ class imageCache extends Core {
 		}
 	}
 
-	set(images, callback) {
+	store(images, callback) {
 		if (_.isFunction(callback)) {
 
-			this.setCacheChild(images, callback);
+			this.storeCacheChild(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.setCacheChild(images, function(err, results) {
+				this.storeCacheChild(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
