@@ -8,24 +8,30 @@ const fs = require('fs');
  * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
  */
 
-/* imageCache class
- * imageCache extends from Core
+/** imageCache class
+ * @description imageCache extends from Core
  */
 class imageCache extends Core {
-	/* isCached
-	 * Async function check is image on argument available on cache
+	compress() {
+		this.inlineCompress = true;
+
+		return this;
+	}
+	/** isCached
+	 * @description Async function check is image on argument available on cache
 	 *
-	 * @param String 	image
+	 * @param {String}
+	 * @param {Function}
 	 * @return Promise
 	 */
 	isCached(image, callback) {
 		if (_.isFunction(callback)) {
 
-			this.isCachedChild(image, callback);
+			this.isCachedService(image, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.isCachedChild(image, function(err, exists) {
+				this.isCachedService(image, function(err, exists) {
 					if (err) reject(err);
 
 					resolve(exists);
@@ -33,6 +39,12 @@ class imageCache extends Core {
 			});
 		}
 	}
+	/** isCachedSync
+	 * @description check is image available on cached / already cached?
+	 * 
+	 * @param {String} image 
+	 * @return {Boolean}
+	 */
 	isCachedSync(image) {
 		try	{
 			fs.statSync(this.getFilePath(image));
@@ -45,14 +57,20 @@ class imageCache extends Core {
 		return true;
 	}
 
+	/** get() ASYNC
+	 * @description Get cached image from folder using same url 
+	 *
+	 * @param {String|Array} image
+	 * @return {Callback|Promise}
+	 */
 	get(image, callback) {
 		if (_.isFunction(callback)) {
 
-			this.getCacheChild(image, callback);
+			this.getCacheService(image, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.getCacheChild(image, function(err, results) {
+				this.getCacheService(image, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -60,6 +78,12 @@ class imageCache extends Core {
 			});
 		}
 	};
+	/** getSync() SYNC
+	 * @description get image from cache
+	 * 
+	 * @param {String|Array} 	image 
+	 * @return {Callback|Promise}
+	 */
 	getSync(image) {
 		try	{
 			return this.readFileSync(image);
@@ -68,14 +92,20 @@ class imageCache extends Core {
 		}
 	}
 
+	/** store() ASYNC
+	 * @description store image as a cache 
+	 *
+	 * @param {String|Array} images 
+	 * @return {Function|Promise} 
+	 */
 	store(images, callback) {
 		if (_.isFunction(callback)) {
 
-			this.storeCacheChild(images, callback);
+			this.storeCacheService(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.storeCacheChild(images, function(err, results) {
+				this.storeCacheService(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -84,14 +114,21 @@ class imageCache extends Core {
 		}
 	}
 
+	/**
+	 * @description check is image already on cache will be return as cache or is not available
+	 * on cache folder then will be return as image (and cached)
+	 * 
+	 * @param {String|Array} images 
+	 * @param {Function|Promise} callback 
+	 */
 	fetch(images, callback) {
 		if (_.isFunction(callback)) {
 
-			this.fetchImagesChild(images, callback);
+			this.fetchImagesService(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.fetchImagesChild(images, function(err, results) {
+				this.fetchImagesService(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -100,14 +137,19 @@ class imageCache extends Core {
 		}
 	}
 
+	/**
+	 * @description remove image from cache folder
+	 * 
+	 * @param {Array|String} images 
+	 */
 	remove(images) {
 		if (_.isFunction(callback)) {
 
-			this.removeCacheChild(images, callback);
+			this.removeCacheService(images, callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.removeCacheChild(images, function(err, results) {
+				this.removeCacheService(images, function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -116,14 +158,18 @@ class imageCache extends Core {
 		}
 	}
 
+	/**
+	 * @description remove all cached image on Cache Directory
+	 * 
+	 */
 	flush() {
 		if (_.isFunction(callback)) {
 
-			this.flushCacheChild(callback);
+			this.flushCacheService(callback);
 		} else {
 			
 			return new Promise((resolve, reject) => {
-				this.flushCacheChild(function(err, results) {
+				this.flushCacheService(function(err, results) {
 					if (err) reject(err);
 
 					resolve(results);
@@ -131,6 +177,10 @@ class imageCache extends Core {
 			});
 		}
 	}
+	/**
+	 * @description remove all cached image on Cache Directory Syncronius function
+	 * 
+	 */
 	flushSync() {
 		var files = fs.readdirSync(this.options.dir);
 		var deletedFiles = 0;
