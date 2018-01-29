@@ -253,7 +253,7 @@ imageCache.fetch(image).then((images) => {
 
    // [ { ... } ]
 }).catch((error) => {
-    
+
 });
 ```
 
@@ -270,7 +270,7 @@ imageCache.fetch(image).then((images) => {
 | `image.data` | `string` | base64 code, ugly text from your beauty images |
 | `image.cache` | `string` | cache status is "MISS" or "HIT" |
 
-## MISS or HIT
+## What is MISS or HIT mean?
 
 ### MISS
 when your image is not available in the cache folder, image will be grab from image URL then cached on cache folder.
