@@ -8,7 +8,10 @@ Powerful image cache for NodeJS
 Asynchronous calls for best Performance.
 
 ## New
-Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching.
+- Compressed options default is `false`
+- Library Core now using Javascript Classes
+- New syntax and function
+- Now `image-cache` using [google proxy cache](https://gist.github.com/coolaj86/2b2c14b1745028f49207) for best caching.
 
 ## Installation
 to install `image-cache` on your project, you can use NPM and Yarn with the following command, 
@@ -27,7 +30,7 @@ yarn add image-cache
 Start using `image-cache` 
 
 ```javascript
-var imageCache = require('image-cache');
+const imageCache = require('image-cache');
 ```
 
 ## API
@@ -47,7 +50,7 @@ imageCache.setOptions({
 | Key          | Data Type    | Default Value    | Description |
 | :------------- | :----------- | :------------- | :------------- |
 | `dir` | `string` | `path.join(__dirname, 'cache/')` | directory root for cached files |
-| `compressed` | `boolean` | true | compressing cache output with zlib compressing maybe can make your processing cache little bit longer. for example without compressing is 6-7ms when using compressing is 150-185ms, but your cache file is a litle bit smaller than without compressing |
+| `compressed` | `boolean` | false | compressing cache output with zlib compressing maybe can make your processing cache little bit longer. for example without compressing is 6-7ms when using compressing is 150-185ms, but your cache file is a litle bit smaller than without compressing |
 | `extname` | `string` | `.cache` | file extension for your cache files |
 | `googleCache` | `boolean` | `true` | using google cache proxy |
 
@@ -64,9 +67,17 @@ imageCache.isCached(url, callback);
 | `url` | `string` | 
 | `callback` | `function` | 
 
-#### Example
+#### Example Using Callback
 ```javascript
-imageCache.isCached(url, function(exist) {
+imageCache.isCached(url, (exist) => {
+   if (exist) {
+      // do something with cached image
+   }
+});
+```
+#### Example Using Promise
+```javascript
+imageCache.isCached(url).then((exist) => {
    if (exist) {
       // do something with cached image
    }
@@ -87,12 +98,15 @@ var exists = imageCache.isCachedSync(url);
 | `url` | `string` | url of your image |
 
 
-### getCache()
-Get Cached Image
+### getCache
+Deprecated
+
+### get()
+Get cached image
 
 #### Example
 ```javascript
-imageCache.getCache(url, function(error, image) {
+imageCache.get(url, (error, image) => {
    console.log(image);
 
    // do something with image
@@ -111,22 +125,28 @@ imageCache.getCache(url, function(error, image) {
 
 
 ### getCacheSync
+Deprecated
+
+### getSync
 Get Cached image with Synchronous processing.
 
 #### Example
 
 ```javascript
-var image = imageCache.getCache('http://domain/path/to/image.png');
+var image = imageCache.getSync('http://domain/path/to/image.png');
 ```
 
 #### API
-API return same like `.getCache()`
+API return same like `.get()`
 
 ### setCache()
-Set new Cache, write cache files into `options.dir` Directory. set cache is working with multiple images.
+Deprecated
+
+### store()
+store new image want to cache, write cache files into `options.dir` Directory. set cache is working with multiple images (Array). 
 
 ```javascript
-imageCache.setCache(images, callback);
+imageCache.store(images, callback);
 ```
 
 #### Params
@@ -135,31 +155,50 @@ imageCache.setCache(images, callback);
 | `images` | `array`|`string` | 
 | `callback` | `function` | 
 
-#### Example
+#### Example Using Callback
 ```javascript
 let images = 'https://eladnava.com/content/images/2015/11/js-6.jpg';
-imageCache.setCache(images, function(error) {
+imageCache.store(images, function(error) {
    console.log(error);
 });
 ```
+#### Example Using Promise
+```javascript
+let images = 'https://eladnava.com/content/images/2015/11/js-6.jpg';
+imageCache.store(images).then((result) {
+    // do something when image stored
+}).catch((e) => {
+    console.log(e)
+});
+```
 
-#### API Callback
+#### API Callback and Promise Catch
 | Key          | Data Type    | Description    |
 | :------------- | :----------- | :------------- | 
 | `error` | `object` | this error came from `fs.writeFile`  |
 
-
 ### flushCache()
+Deprecated
+
+### flush()
 Delete all cache files on your directory. this code will delete all cache on `options.dir` with extension name same as `options.extname`. 
 
-#### Example
+#### Example Using Callback
 ```javascript
-imageCache.flushCache(function(error, results) {
+imageCache.flush(function(error, results) {
    if (error) {
       console.log(error);
    } else {
       console.log(results);
    }
+});
+```
+#### Example Using Promise
+```javascript
+imageCache.flush().then((results) => {
+    console.log(results);
+}).then((error) => {
+    console.log(error);
 });
 ```
 
@@ -171,17 +210,17 @@ imageCache.flushCache(function(error, results) {
 | `results.totalFiles` | `number` | total files on directory |
 | `results.dir` | `string` | Directory cache images |
 
-### flushCacheSync()
-same like flushCache, but using Synchronous processing.
+### flushSync()
+same like `flush` method, but using Synchronous processing.
 
 #### Example
 
 ```javascript
-var results = imageCache.flushCache();
+var results = imageCache.flushSync();
 ```
 
 #### API
-same like `flushCache()`
+same like `flush()`
 
 | Key          | Data Type    | Description    |
 | :------------- | :----------- | :------------- |
@@ -189,10 +228,10 @@ same like `flushCache()`
 | `results.message` | `string` | error message |
 
 ### fetchImage()
-fetchImage is a function to store cache and get cache data in one time. fetchImage using Async processing for best performace. fetchImage() check your cache file first, if your image is not available in cache folder then this function will get image and return your cache data.
+Deprecated
 
-fetchImage() using Promise.
-fetchImage callback is return as Array.
+### fetch()
+`fetch()` is a function to store cache and get cache data in one time. `fetch()` using Async processing for best performace. `fetch()` check your cache file first, if your image is not available in cache folder then this function will get image and return your cache data.
 
 #### Params
 | Key          | Data Type    | Description    |
@@ -204,7 +243,7 @@ fetchImage callback is return as Array.
 ```javascript
 var image = "http://path.to/image.jpg";
 
-imageCache.fetchImage(image).then((images) => {
+imageCache.fetch(image).then((images) => {
    images.forEach((image) => {
       console.log(image);
 
@@ -213,6 +252,8 @@ imageCache.fetchImage(image).then((images) => {
    console.log(images);
 
    // [ { ... } ]
+}).catch((error) => {
+    
 });
 ```
 
