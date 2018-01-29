@@ -82,6 +82,19 @@ describe('imageCache Test', function() {
 			assert.equal(result.code, "ENOENT");
 		});
 	});
+	describe('#store a image', function() {
+		it('should be false', function(done) {
+			imageCache.compress().store(urlYes).then((result) => {
+				console.log(result);
+
+				done();
+			}).catch((e) => {
+				
+
+				done();
+			});
+		});
+	});
 	describe('#fetch a image ', function() {
 		it('#fetch() {Callback} should be return false', function(done) {
 			imageCache.fetch(urlNone, (err, result) => {
