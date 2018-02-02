@@ -6,9 +6,9 @@ const imageCache = require('../image-cache');
 const Core = require('../lib/core');
 const assert = require('assert');
 
-var url = 'http://webresource.c-ctrip.com/ResCRMOnline/R5/html5/images/57.png';
-var urlYes = "https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg";
-var urlNone = 'http://webresource.c-ctrip.com/ResCRM/57.png';
+let url = 'http://webresource.c-ctrip.com/ResCRMOnline/R5/html5/images/57.png';
+let urlYes = "https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg";
+let urlNone = 'http://webresource.c-ctrip.com/ResCRM/57.png';
 
 describe('imageCache Test', function() {
 	beforeEach(function() {
@@ -51,7 +51,7 @@ describe('imageCache Test', function() {
 		 * @expect Boolean 		false
 		 */
 		it('#isCachedSync() {Try} should be return false', function() {
-			var exists = imageCache.isCachedSync(url);
+			let exists = imageCache.isCachedSync(url);
 			
 			assert.equal(exists, false);
 		});
@@ -77,7 +77,7 @@ describe('imageCache Test', function() {
 			});
 		});
 		it('#getSync() should be return error code ENOENT', function() {
-			var result = imageCache.getSync(url);
+			let result = imageCache.getSync(url);
 			
 			assert.equal(result.code, "ENOENT");
 		});
@@ -85,12 +85,10 @@ describe('imageCache Test', function() {
 	describe('#store a image', function() {
 		it('should be false', function(done) {
 			imageCache.compress().store(urlYes).then((result) => {
-				console.log(result);
-
+				
 				done();
 			}).catch((e) => {
-				
-
+			
 				done();
 			});
 		});
