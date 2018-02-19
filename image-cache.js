@@ -78,6 +78,7 @@ class imageCache extends Core {
 			});
 		}
 	};
+	
 	/** getSync() SYNC
 	 * @description get image from cache
 	 * 
@@ -113,7 +114,6 @@ class imageCache extends Core {
 			});
 		}
 	}
-
 	/**
 	 * @description check is image already on cache will be return as cache or is not available
 	 * on cache folder then will be return as image (and cached)
