@@ -18,6 +18,7 @@
   "dependencies": {
     "async": "^2.4.1",
     "base64-img": "^1.0.3",
+    "compressing": "^1.2.3",
     "md5": "^2.2.1",
     "pako": "^1.0.5",
     "underscore": "^1.8.3",
