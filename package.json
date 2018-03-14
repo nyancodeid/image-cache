@@ -4,7 +4,12 @@
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
-    "test": "node node_modules/.bin/mocha test/test.js"
+    "lint": "eslint .",
+    "spec": "node node_modules/.bin/mocha test/test.js",
+    "test": "npm run lint && npm run spec"
+  },
+  "engines": {
+    "node": ">=6.9.0"
   },
   "keywords": [
     "image cache",
@@ -16,18 +21,23 @@
   "author": "Ryan Aunur Rassyid <ryandevstudio@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.4.1",
-    "base64-img": "^1.0.3",
+    "async": "^2.6.0",
+    "base64-img": "^1.0.4",
     "md5": "^2.2.1",
-    "pako": "^1.0.5",
-    "underscore": "^1.8.3",
-    "zlib": "^1.0.5"
+    "pako": "^1.0.6",
+    "underscore": "^1.8.3"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/nyancodeid/image-cache.git"
   },
   "devDependencies": {
-    "mocha": "^3.4.2"
+    "eslint": "^4.18.2",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^5.0.4"
   }
 }
