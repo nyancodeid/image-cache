@@ -102,8 +102,4 @@ describe('imageCache Test', function () {
       })
     })
   })
-  // describe('#flush cache', function () {
-  //   it('should be true', () => imageCache.flush()
-  //     .then(result => assert.equal(typeof data, 'object')))
-  // })
 })
