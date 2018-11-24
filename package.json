@@ -4,7 +4,8 @@
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
-    "test": "node node_modules/.bin/mocha test/test.js"
+    "test": "node node_modules/.bin/mocha test/test.js",
+    "build": "babel src -d lib"
   },
   "keywords": [
     "image cache",
@@ -28,6 +29,7 @@
     "url": "https://github.com/nyancodeid/image-cache.git"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
     "mocha": "^3.4.2"
   }
 }
