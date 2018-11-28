@@ -1,8 +1,10 @@
 # Custom
 cache/
 temp/
+test/images/*
 unit-test.js
 coba.js
+lib/
 
 # Yarn
 yarn-error.log
