@@ -1,14 +1,15 @@
 {
-  "extends": "standard",
-  "env": {
-	"es6": true,
-	"node": true,
-	"mocha": true
-  },
-  "plugins": [
-	"promise"
-  ],
-  "rules": {
-	"no-tabs": "off"
-  }
+	"extends": "standard",
+	"env": {
+		"es6": true,
+		"node": true,
+		"mocha": true
+	},
+	"plugins": [
+		"promise"
+	],
+	"rules": {
+		"no-tabs": "off",
+		"no-useless-constructor": "off"
+	}
 }
