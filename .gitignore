@@ -5,6 +5,7 @@ test/images/*
 unit-test.js
 coba.js
 lib/
+.vscode/
 
 # Yarn
 yarn-error.log
