@@ -105,7 +105,7 @@ class Core {
       return Promise.resolve({ success: true, dataUri: data })
     }).catch(error => {
       // eslint-disable-next-line prefer-promise-reject-errors
-      return Promise.resolve({ success: false, err: 'ERR_FETCH_IMAGE', status: error.statusCode, error: error })
+      return Promise.resolve({ success: false, err: 'ERR_FETCH_IMAGE', status: error.statusCode })
     })
   }
   /** getImages
@@ -128,7 +128,7 @@ class Core {
         }
 
         this.toBase64(image).then(res => {
-          if (res.status) {
+          if (res.success) {
             resultsImages.push({
               error: false,
               url: rawImage,
