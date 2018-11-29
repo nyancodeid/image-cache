@@ -82,7 +82,7 @@ class Core {
 	 * @return {String}
 	 */
   getFilePath (image) {
-    var fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image)
+    let fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image)
 
     return this.options.dir + fileName + this.options.extname
   }
@@ -100,7 +100,7 @@ class Core {
     })
 
     return query.run().then(res => {
-      var data = 'data:' + res.headers['content-type'] + ';base64,' + res.body.toString('base64')
+      const data = 'data:' + res.headers['content-type'] + ';base64,' + res.body.toString('base64')
       // callback(err, res, data);
       return Promise.resolve({ success: true, dataUri: data })
     }).catch(error => {
