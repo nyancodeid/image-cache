@@ -4,8 +4,9 @@
   "description": "Node JS Image Cache with Base64 Encode",
   "main": "image-cache.js",
   "scripts": {
-    "test": "node node_modules/.bin/mocha test/test.js",
-    "build": "babel src -d lib"
+    "test": "node_modules/.bin/babel src -d lib && node_modules/.bin/mocha test/test.js",
+    "build": "node_modules/.bin/babel src -d lib",
+    "prepublish": "node_modules/.bin/babel src -d lib"
   },
   "keywords": [
     "image cache",
@@ -18,18 +19,25 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.4.1",
-    "base64-img": "^1.0.3",
     "md5": "^2.2.1",
-    "pako": "^1.0.5",
-    "underscore": "^1.8.3",
-    "zlib": "^1.0.5"
+    "pako": "^1.0.6",
+    "request-promise-lite": "^0.15.0",
+    "underscore": "^1.8.3"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/nyancodeid/image-cache.git"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "mocha": "^3.4.2"
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/preset-env": "^7.1.6",
+    "eslint": "^5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "mocha": "^5.2.0"
   }
 }
