@@ -2,7 +2,7 @@
  * Image file from the Internet
  */
 
-const ImageCacheProvider = require('../src/main')
+const ImageCacheProvider = require('../lib/main')
 const assert = require('assert')
 const path = require('path')
 
@@ -12,8 +12,8 @@ const imageCache = new ImageCacheProvider({
 })
 
 var url = 'http://webresource.c-ctrip.com/ResCRMOnline/R5/html5/images/57.png'
-var urlYes = 'https://lh3.googleusercontent.com/-AUpXPK4IOi4/AAAAAAAAAAI/AAAAAAAAAAA/AI6yGXxcuACwUIVtH8VfdOlCD8KQjDDZSw/s32-c-mo/photo.jpg'
-var urlNone = 'http://webresource.c-ctrip.com/ResCRM/57.png'
+var URL_WITH_SUCCESS = 'https://bit.ly/1JcI49O'
+var URL_WITH_ERROR = 'http://webresource.c-ctrip.com/ResCRM/57.png'
 
 describe('imageCache Test', function () {
   describe('#Check is file cached', function () {
@@ -37,7 +37,7 @@ describe('imageCache Test', function () {
 		 * @expect Boolean 		true
 		 */
     it('#isCached() {Promise} should be return true', function (done) {
-      imageCache.isCached(urlYes).then((exist) => {
+      imageCache.isCached(URL_WITH_SUCCESS).then((exist) => {
         assert.strictEqual(exist, true)
 
         done()
@@ -64,19 +64,6 @@ describe('imageCache Test', function () {
         done()
       })
     })
-    // it('#get() {Promise} should be return object without error', function (done) {
-    //   imageCache.get(urlYes).then((result) => {
-    //     // console.log(result)
-    //     assert.strictEqual(typeof result, 'object')
-    //     assert.strictEqual(result.error, false)
-
-    //     done()
-    //   }).catch((error) => {
-    //     assert.notStrictEqual(error.code, 'ENOENT')
-
-    //     done()
-    //   })
-    // })
     it('#getSync() should be return error code ENOENT', function () {
       try {
         imageCache.getSync(url)
@@ -87,7 +74,7 @@ describe('imageCache Test', function () {
   })
   describe('#store a image', function () {
     it('should be false', function (done) {
-      imageCache.compress().store(urlYes).then((result) => {
+      imageCache.compress().store(URL_WITH_SUCCESS).then((result) => {
         // console.log(result)
 
         done()
@@ -98,18 +85,18 @@ describe('imageCache Test', function () {
   })
   describe('#fetch a image ', function () {
     it('#fetch() {Callback} should be return false', function (done) {
-      imageCache.fetch(urlNone, (err, result) => {
-        assert.strictEqual(err, null)
+      imageCache.fetch(URL_WITH_ERROR, (err, result) => {
+        assert.notStrictEqual(err, null)
 
         done()
-      })
-    })
+      }).catch(console.error)
+    }).timeout(5000)
     it('#fetch() {Promise} should be return false', function (done) {
-      imageCache.fetch(urlYes).then((result) => {
+      imageCache.fetch(URL_WITH_SUCCESS).then((result) => {
         assert.strictEqual(result.error, false)
 
         done()
       }).catch(console.error)
-    })
+    }).timeout(5000)
   })
 })
