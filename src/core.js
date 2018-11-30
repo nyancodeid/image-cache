@@ -81,8 +81,8 @@ class Core {
 	 * @param  {String} 	image
 	 * @return {String}
 	 */
-  getFilePath (image) {
-    let fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image)
+  _getFilePath (image) {
+    const fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image)
 
     return this.options.dir + fileName + this.options.extname
   }
@@ -164,11 +164,6 @@ class Core {
     fs.unlinkSync(path)
   }
 
-  _getFilePath (image) {
-    const fileName = (this.options.compressed) ? `${md5(image)}_min` : md5(image)
-
-    return this.options.dir + fileName + this.options.extname
-  }
   _readFile (image) {
     const path = this._getFilePath(image)
     try {
@@ -193,7 +188,7 @@ class Core {
     })
   }
   _writeFile (options) {
-    fs.writeFileSync(path.join(this.options.dir, `${options.fileName} ${this.options.extname}`), options.data)
+    fs.writeFileSync(path.join(this.options.dir, `${options.fileName}${(this.options.compressed) ? '_min' : ''}${this.options.extname}`), options.data)
   }
   /**
 	 * @description read file from cached file
@@ -273,7 +268,7 @@ class Core {
 	 */
 
   readFileSync (image) {
-    let path = this.getFilePath(image)
+    let path = this._getFilePath(image)
     let results = Util.backToString(fs.readFileSync(path))
 
     let stats = this._isFileExist(path)
@@ -293,7 +288,7 @@ class Core {
 
   fetchImage (image) {
     if (image.exists) {
-      const pathFile = this.getFilePath(image.fileName)
+      const pathFile = this._getFilePath(image.fileName)
       return this.readFileFetch({
         path: pathFile
       })
@@ -315,7 +310,7 @@ class Core {
 
   isCachedService (image) {
     try {
-      const stats = fs.statSync(this.getFilePath(image))
+      const stats = fs.statSync(this._getFilePath(image))
 
       return (stats) ? Promise.resolve(true) : Promise.resolve(false)
     } catch (e) {
@@ -376,7 +371,7 @@ class Core {
 
     images.forEach(image => {
       try {
-        fs.unlinkSync(this.getFilePath(image))
+        fs.unlinkSync(this._getFilePath(image))
       } catch (e) {
         callback(e)
       }
@@ -393,7 +388,7 @@ class Core {
 
     return new Promise((resolve, reject) => {
       imagesData = imagesData.map(image => {
-        const fileName = this.getFilePath(image)
+        const fileName = this._getFilePath(image)
         const exists = this._isFileExist(fileName)
         const url = image
 
