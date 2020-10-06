@@ -5,7 +5,7 @@ const fs = require('fs');
 
 /**
  * image-cache - Image Cache Async with Base64
- * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com> 
+ * @author Ryan Aunur Rassyid <Indonesia><ryandevstudio@gmail.com>
  */
 
 /** imageCache class
@@ -21,7 +21,7 @@ class imageCache extends Core {
 	 * @description Async function check is image on argument available on cache
 	 *
 	 * @param {String}
-	 * @param {Function}
+     * @param {Function|Promise|null} callback
 	 * @return Promise
 	 */
 	isCached(image, callback) {
@@ -29,7 +29,7 @@ class imageCache extends Core {
 
 			this.isCachedService(image, callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.isCachedService(image, function(err, exists) {
 					if (err) reject(err);
@@ -41,8 +41,8 @@ class imageCache extends Core {
 	}
 	/** isCachedSync
 	 * @description check is image available on cached / already cached?
-	 * 
-	 * @param {String} image 
+	 *
+	 * @param {String} image
 	 * @return {Boolean}
 	 */
 	isCachedSync(image) {
@@ -58,9 +58,10 @@ class imageCache extends Core {
 	}
 
 	/** get() ASYNC
-	 * @description Get cached image from folder using same url 
+	 * @description Get cached image from folder using same url
 	 *
 	 * @param {String|Array} image
+     * @param {Function|Promise|null} callback
 	 * @return {Callback|Promise}
 	 */
 	get(image, callback) {
@@ -68,7 +69,7 @@ class imageCache extends Core {
 
 			this.getCacheService(image, callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.getCacheService(image, function(err, results) {
 					if (err) reject(err);
@@ -80,8 +81,8 @@ class imageCache extends Core {
 	};
 	/** getSync() SYNC
 	 * @description get image from cache
-	 * 
-	 * @param {String|Array} 	image 
+	 *
+	 * @param {String|Array} 	image
 	 * @return {Callback|Promise}
 	 */
 	getSync(image) {
@@ -93,17 +94,18 @@ class imageCache extends Core {
 	}
 
 	/** store() ASYNC
-	 * @description store image as a cache 
+	 * @description store image as a cache
 	 *
-	 * @param {String|Array} images 
-	 * @return {Function|Promise} 
+	 * @param {String|Array} images
+     * @param {Function|Promise|null} callback
+     * @return {Function|Promise}
 	 */
 	store(images, callback) {
 		if (_.isFunction(callback)) {
 
 			this.storeCacheService(images, callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.storeCacheService(images, function(err, results) {
 					if (err) reject(err);
@@ -117,16 +119,16 @@ class imageCache extends Core {
 	/**
 	 * @description check is image already on cache will be return as cache or is not available
 	 * on cache folder then will be return as image (and cached)
-	 * 
-	 * @param {String|Array} images 
-	 * @param {Function|Promise} callback 
+	 *
+	 * @param {String|Array} images
+	 * @param {Function|Promise|null} callback
 	 */
 	fetch(images, callback) {
 		if (_.isFunction(callback)) {
 
 			this.fetchImagesService(images, callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.fetchImagesService(images, function(err, results) {
 					if (err) reject(err);
@@ -139,15 +141,16 @@ class imageCache extends Core {
 
 	/**
 	 * @description remove image from cache folder
-	 * 
-	 * @param {Array|String} images 
-	 */
-	remove(images) {
+	 *
+	 * @param {Array|String} images
+     * @param {Function|Promise|null} callback
+     */
+	remove(images, callback) {
 		if (_.isFunction(callback)) {
 
 			this.removeCacheService(images, callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.removeCacheService(images, function(err, results) {
 					if (err) reject(err);
@@ -160,14 +163,14 @@ class imageCache extends Core {
 
 	/**
 	 * @description remove all cached image on Cache Directory
-	 * 
-	 */
-	flush() {
+     * @param {Function|Promise|null} callback
+     */
+	flush(callback) {
 		if (_.isFunction(callback)) {
 
 			this.flushCacheService(callback);
 		} else {
-			
+
 			return new Promise((resolve, reject) => {
 				this.flushCacheService(function(err, results) {
 					if (err) reject(err);
@@ -179,7 +182,7 @@ class imageCache extends Core {
 	}
 	/**
 	 * @description remove all cached image on Cache Directory Syncronius function
-	 * 
+	 *
 	 */
 	flushSync() {
 		var files = fs.readdirSync(this.options.dir);
